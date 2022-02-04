@@ -1,5 +1,7 @@
 FROM openjdk:8-alpine
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
 ENV TZ=Asia/Shanghai
 RUN set -eux; \
     apk add --no-cache --update tzdata; \

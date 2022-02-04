@@ -1,5 +1,7 @@
 FROM nginx:1.17.0-alpine
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
 # Copy the react build from Stage 1
 ARG DIST_FOLDER=dist
 COPY ${DIST_FOLDER}/ /var/www/

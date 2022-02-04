@@ -68,11 +68,11 @@ export const BottomToolbar: React.FC<Props> = (props) => {
   };
 
   const openFlinkUI = () => {
-    window.open("http://localhost:8081", "_blank");
+    window.open("http://localhost:9090/flinkui/", "_blank");
   };
 
   const openNotebook = () => {
-    window.open("http://localhost:8888", "_blank");
+    window.open("http://localhost:9090/notebook/", "_blank");
   };
 
   const runningConfigs = [

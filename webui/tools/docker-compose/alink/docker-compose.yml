@@ -8,8 +8,8 @@ services:
   # App backend service
   server:
     image: alink_server:v0.1
-    ports:
-      - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+    # ports:
+    #   - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
     restart: always
     environment:
       ALINK_REMOTE_CLUSTER_HOST: flink-jobmanager
@@ -35,12 +35,13 @@ services:
       - server
     networks:
       - frontend
+      - backend
 
   # Database Service (Mysql)
   db:
     image: mysql:5.7
-    ports:
-      - "3306:3306"
+    # ports:
+    #   - "3306:3306"
     restart: always
     environment:
       MYSQL_DATABASE: alink
@@ -54,8 +55,8 @@ services:
 
   flink-jobmanager:
     image: flink_with_alink_jar:v0.1
-    ports:
-      - "8081:8081"
+    # ports:
+    #   - "8081:8081"
     restart: always
     networks:
       - backend
@@ -101,14 +102,14 @@ services:
 
   notebook:
     image: alink_notebook:v0.1
-    ports:
-      - "8888:8888"
+    # ports:
+    #   - "8888:8888"
     networks:
       - backend
     volumes:
       - notebook-data:/home/jovyan/
       - shared-data:/alink
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.base_url=/notebook/"
 
 # Volumes
 volumes:
@@ -118,7 +119,7 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: nfsvers=4,addr=localhost,rw
+      o: nfsvers=4,addr=nfs,rw
       device: ":/"
 
 # Networks to be created to facilitate communication between containers
@@ -126,3 +127,5 @@ networks:
   backend:
   frontend:
   flink:
+  nfs:
+    external: true

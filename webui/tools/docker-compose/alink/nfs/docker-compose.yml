@@ -21,6 +21,11 @@ services:
       - /bin/sh
       - -c
       - "echo 'start'&&chmod 777 /shared&&/usr/bin/nfsd.sh"
+    networks:
+      - nfs
 
 volumes:
   nfs-shared-data:
+
+networks:
+  nfs:
