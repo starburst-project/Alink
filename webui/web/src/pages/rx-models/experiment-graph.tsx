@@ -30,19 +30,15 @@ import {
 } from "./graph-util";
 import { copyNode } from "@/mock/graph";
 import {
-  addNodeReq,
-  queryGraphReq,
-  moveNodeReq,
-  getNodeReq,
   convertNode,
   convertGraph,
   addEdgeReq,
   delEdgeReq,
-  delNodeReq,
-  renameNodeReq,
   runGraphReq,
 } from "@/requests/graph";
 import { queryGraphStatus, stopGraphRun } from "@/mock/status";
+import { getExperimentContentUsingGET } from "@/services/alink-web/experimentController";
+import { addNodeUsingPOST, deleteNodeUsingGET, getNodeUsingGET, updateNodeUsingGET } from "@/services/alink-web/nodeController";
 
 export function parseStatus(data: NExecutionStatus.ExecutionStatus) {
   const { execInfo, instStatus } = data;
@@ -299,7 +295,7 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
 
   // 获取图
   async loadExperimentGraph(experimentId: string) {
-    const graphRes = await queryGraphReq();
+    const graphRes = await getExperimentContentUsingGET({});
     graphRes.data = convertGraph(graphRes.data);
     this.experimentGraph$.next(graphRes.data as any);
   }
@@ -573,7 +569,11 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
         const { id } = node;
         this.updateNodeById(id, (node?: BaseNode) => {
           node!.setData({ x, y });
-          moveNodeReq(id, x, y);
+          updateNodeUsingGET({
+            node_id: id,
+            position_x: x,
+            position_y: y
+          })
         });
         return {
           nodeInstanceId: id,
@@ -717,11 +717,16 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
       const { nodeMeta, clientX, clientY } = param;
       const defaultName = nodeMeta.name[0].toLowerCase() + nodeMeta.name.substr(1)
       const pos = graph.clientToLocal(clientX, clientY);
-      const addNodeResp = await addNodeReq({
-        ...nodeMeta, ...pos,
-        name: defaultName
-      });
-      const nodeRes = convertNode((await getNodeReq(addNodeResp.id)).node);
+      const addNodeResp = await addNodeUsingPOST({
+        nodeName: defaultName,
+        className: nodeMeta.className,
+        nodeType: "FUNCTION",
+        positionX: pos?.x,
+        positionY: pos?.y
+      })
+      const nodeRes = convertNode((await getNodeUsingGET({
+        node_id: addNodeResp.data?.id || 0
+      })).data?.node);
       this.updateExperimentGraph([nodeRes]);
       const newNode = formatNodeInfoToNodeMeta(nodeRes as any);
       this.addNode(newNode);
@@ -736,7 +741,9 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
     if (this.graph && nodeInstanceIds.length) {
       nodeInstanceIds.forEach((d) => {
         const node = this.getNodeById(d);
-        delNodeReq(node!.data.id);
+        deleteNodeUsingGET({
+          node_id: node!.data.id
+        })
       });
       this.deleteNodes(nodeInstanceIds);
       this.clearContextMenuInfo();
@@ -775,7 +782,10 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
 
   // 重命名节点
   renameNode = async (nodeInstanceId: string, newName: string) => {
-    const renameRes = await renameNodeReq(nodeInstanceId, newName);
+    const renameRes = updateNodeUsingGET({
+      node_id: parseInt(nodeInstanceId),
+      name: newName
+    });
     const cell = this.getCellById(nodeInstanceId);
     const data: object = cell!.getData();
     const newData = { ...data, name: newName };

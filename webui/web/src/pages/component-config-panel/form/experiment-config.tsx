@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input } from "antd";
 import { useObservableState } from "@/common/hooks/useObservableState";
 import { useExperimentGraph } from "@/pages/rx-models/experiment-graph";
 import { getExperimentReq, updateExperimentReq } from "@/requests/graph";
+import { useRequest } from "umi";
+import { getExperimentUsingGET } from "@/services/alink-web/experimentController";
 
 export interface Props {
   name: string;
@@ -25,15 +27,18 @@ export const ExperimentForm: React.FC<Props> = ({ experimentId, name }) => {
     }
   };
 
-  React.useEffect(() => {
-    getExperimentReq().then((d) => {
-      const config = JSON.parse(d.experiment.config);
-      if (config && "parallelism" in config) {
-        form.setFieldsValue({
-          parallelism: config.parallelism,
-        });
-      }
-    });
+  const {data} = useRequest(getExperimentUsingGET);
+
+  useEffect(() => {
+    const configStr = data?.config;
+
+    const config = configStr ? JSON.parse(configStr) : null;
+
+    if (config && "parallelim" in config) {
+      form.setFieldsValue({
+        parallelism: config.parallelism
+      });
+    }
   }, [activeExperiment]);
 
   return (

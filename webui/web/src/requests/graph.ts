@@ -12,10 +12,6 @@ interface NodeParams {
 const inPortPrefix = "in";
 const outPortPrefix = "out";
 
-export const getNodeReq = async (id: number | string) => {
-  return await get(`/node/get?node_id=${id}`);
-};
-
 export const convertNode = (node: any) => {
   const config = getAlgoConfig(node.className);
   node.inPorts = range(config.numInPorts).map((_, index) => ({
@@ -43,30 +39,6 @@ export const convertGraph = (graph: any) => {
   graph.links = graph.edges.map((d: any) => convertEdge(d));
   delete graph.edges;
   return graph;
-};
-
-// Node requests
-export const addNodeReq = async ({ name, className, x, y }: NodeParams) => {
-  const data = {
-    nodeType: "FUNCTION",
-    nodeName: name,
-    positionX: x,
-    positionY: y,
-    className: className,
-  };
-  return await post("/node/add", data);
-};
-
-export const moveNodeReq = async (id: number, x: number, y: number) => {
-  await get(`/node/update?node_id=${id}&position_x=${x}&position_y=${y}`);
-};
-
-export const delNodeReq = async (nodeId: number) => {
-  return await get(`/node/del?node_id=${nodeId}`);
-};
-
-export const renameNodeReq = async (nodeId: number | string, name: string) => {
-  return await get(`/node/update?node_id=${nodeId}&name=${name}`);
 };
 
 // Edge requests

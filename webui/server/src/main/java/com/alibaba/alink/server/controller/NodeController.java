@@ -4,22 +4,23 @@ import com.alibaba.alink.server.domain.Node;
 import com.alibaba.alink.server.domain.NodeType;
 import com.alibaba.alink.server.repository.NodeRepository;
 import com.alibaba.alink.server.service.ExperimentService;
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @RestController
+@Api
 public class NodeController {
 	private final static Logger LOG = LoggerFactory.getLogger(NodeController.class);
 
@@ -35,8 +36,9 @@ public class NodeController {
 	 * @param request
 	 * @return
 	 */
+	@ApiOperation(value = "Add node in the graph.")
 	@RequestMapping(
-		value = "/node/add",
+		value = "/api/v1/node/add",
 		method = RequestMethod.POST,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -61,8 +63,9 @@ public class NodeController {
 	 * @param nodeId       Node ID
 	 * @return
 	 */
+	@ApiOperation(value = "Delete node in the graph.")
 	@RequestMapping(
-		value = "/node/del",
+		value = "/api/v1/node/del",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -84,17 +87,18 @@ public class NodeController {
 	 * @param y            y coordinate
 	 * @return
 	 */
+	@ApiOperation(value = "Update the node in the graph.")
 	@RequestMapping(
-		value = "/node/update",
+		value = "/api/v1/node/update",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
 	@Transactional
 	public BasicResponse updateNode(@RequestParam(value = "experiment_id", defaultValue = "1") Long experimentId,
 									@RequestParam("node_id") Long nodeId,
-									@Nullable @RequestParam("name") String name,
-									@Nullable @RequestParam("position_x") Double x,
-									@Nullable @RequestParam("position_y") Double y) {
+									@Nullable @RequestParam(value = "name", required = false) String name,
+									@Nullable @RequestParam(value = "position_x", required = false) Double x,
+									@Nullable @RequestParam(value = "position_y", required = false) Double y) {
 		Node node = experimentService.secureGetNode(experimentId, nodeId);
 		if (null != name) {
 			node.setName(name);
@@ -116,14 +120,15 @@ public class NodeController {
 	 * @param nodeId       Node ID
 	 * @return
 	 */
+	@ApiOperation(value = "Get the node information in the graph.")
 	@RequestMapping(
-		value = "/node/get",
+		value = "/api/v1/node/get",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
 	@Transactional
 	public GetNodeResponse getNode(@RequestParam(value = "experiment_id", defaultValue = "1") Long experimentId,
-									@RequestParam("node_id") Long nodeId) {
+								   @RequestParam("node_id") Long nodeId) {
 		Node node = experimentService.secureGetNode(experimentId, nodeId);
 		return new GetNodeResponse(node);
 	}
@@ -178,6 +183,7 @@ public class NodeController {
 			this.data.id = id;
 		}
 
+		@ApiModel(value = "AddNodeResponseDataT")
 		static class DataT {
 			/**
 			 * Node ID
@@ -197,6 +203,7 @@ public class NodeController {
 			this.data.node = node;
 		}
 
+		@ApiModel(value = "GetNodeResponseDataT")
 		static class DataT {
 			/**
 			 * Node

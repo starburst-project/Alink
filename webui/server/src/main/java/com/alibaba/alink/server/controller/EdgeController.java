@@ -3,18 +3,19 @@ package com.alibaba.alink.server.controller;
 import com.alibaba.alink.server.domain.Edge;
 import com.alibaba.alink.server.repository.EdgeRepository;
 import com.alibaba.alink.server.service.ExperimentService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Api
 public class EdgeController {
 
 	@Autowired
@@ -29,8 +30,9 @@ public class EdgeController {
 	 * @param request
 	 * @return
 	 */
+	@ApiOperation(value = "Add edge of the graph.")
 	@RequestMapping(
-		value = "/edge/add",
+		value = "/api/v1/edge/add",
 		method = RequestMethod.POST,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -54,8 +56,9 @@ public class EdgeController {
 	 * @param edgeId       Edge ID
 	 * @return
 	 */
+	@ApiOperation(value = "Delete edge of the graph.")
 	@RequestMapping(
-		value = "/edge/del",
+		value = "/api/v1/edge/del",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -112,6 +115,7 @@ public class EdgeController {
 			this.data.id = id;
 		}
 
+		@ApiModel(value = "AddEdgeResponseDataT")
 		static class DataT {
 			/**
 			 * Edge ID

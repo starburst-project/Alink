@@ -8,24 +8,24 @@ import com.alibaba.alink.server.repository.ExperimentRepository;
 import com.alibaba.alink.server.repository.NodeParamRepository;
 import com.alibaba.alink.server.repository.NodeRepository;
 import com.alibaba.alink.server.service.ExperimentService;
-import javax.validation.Valid;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @RestController
+@Api
 public class ExperimentController {
 
 	private final static Logger LOG = LoggerFactory.getLogger(ExperimentController.class);
@@ -51,8 +51,9 @@ public class ExperimentController {
 	 * @param experimentId Experiment ID
 	 * @return
 	 */
+	@ApiOperation(value = "Get the entire graph.")
 	@RequestMapping(
-		value = "/experiment/get_graph",
+		value = "/api/v1/experiment/get_graph",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -60,14 +61,14 @@ public class ExperimentController {
 	public GetExperimentGraphResponse getExperimentContent(
 		@RequestParam(value = "experiment_id", defaultValue = "1") Long experimentId) {
 		experimentService.checkExperimentId(experimentId);
-		List <Node> nodes = nodeRepository.findByExperimentId(experimentId);
-		List <Edge> edges = edgeRepository.findByExperimentId(experimentId);
+		List<Node> nodes = nodeRepository.findByExperimentId(experimentId);
+		List<Edge> edges = edgeRepository.findByExperimentId(experimentId);
 
-		Set <Long> nodeIdSet = new HashSet <>();
+		Set<Long> nodeIdSet = new HashSet<>();
 		for (Node node : nodes) {
 			nodeIdSet.add(node.getId());
 		}
-		List <Edge> toDeleteEdges = new ArrayList <>();
+		List<Edge> toDeleteEdges = new ArrayList<>();
 		for (Edge edge : edges) {
 			if (!nodeIdSet.contains(edge.getSrcNodeId()) || !nodeIdSet.contains(edge.getDstNodeId())) {
 				toDeleteEdges.add(edge);
@@ -93,8 +94,9 @@ public class ExperimentController {
 	 * @param experimentId Experiment ID
 	 * @return
 	 */
+	@ApiOperation(value = "Export the graph to the pyalink script.")
 	@RequestMapping(
-		value = "/experiment/export_pyalink_script",
+		value = "/api/v1/experiment/export_pyalink_script",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -102,7 +104,7 @@ public class ExperimentController {
 	public ExportPyAlinkScriptResponse exportPyAlinkScript(
 		@RequestParam(value = "experiment_id", defaultValue = "1") Long experimentId) throws ClassNotFoundException {
 		experimentService.checkExperimentId(experimentId);
-		List <String> lines = experimentService.exportScripts(experimentId);
+		List<String> lines = experimentService.exportScripts(experimentId);
 		return new ExportPyAlinkScriptResponse(lines);
 	}
 
@@ -112,8 +114,9 @@ public class ExperimentController {
 	 * @param experimentId Experiment ID
 	 * @return
 	 */
+	@ApiOperation(value = "Run the experiment.")
 	@RequestMapping(
-		value = "/experiment/run",
+		value = "/api/v1/experiment/run",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -124,8 +127,9 @@ public class ExperimentController {
 		return BasicResponse.OK();
 	}
 
+	@ApiOperation(value = "Update the experiment.")
 	@RequestMapping(
-		value = "/experiment/update",
+		value = "/api/v1/experiment/update",
 		method = RequestMethod.POST,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -144,8 +148,9 @@ public class ExperimentController {
 		return BasicResponse.OK();
 	}
 
+	@ApiOperation(value = "Get the experiment.")
 	@RequestMapping(
-		value = "/experiment/get",
+		value = "/api/v1/experiment/get",
 		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
@@ -160,37 +165,39 @@ public class ExperimentController {
 	public static class GetExperimentGraphResponse extends BasicResponse {
 		public DataT data = new DataT();
 
-		public GetExperimentGraphResponse(List <Node> nodes, List <Edge> edges) {
+		public GetExperimentGraphResponse(List<Node> nodes, List<Edge> edges) {
 			super("OK");
 			this.data.nodes = nodes;
 			this.data.edges = edges;
 		}
 
+		@ApiModel(value = "GetExperimentGraphResponseDataT")
 		static class DataT {
 			/**
 			 * Node list
 			 */
-			public List <Node> nodes;
+			public List<Node> nodes;
 			/**
 			 * Edge list
 			 */
-			public List <Edge> edges;
+			public List<Edge> edges;
 		}
 	}
 
 	public static class ExportPyAlinkScriptResponse extends BasicResponse {
 		public DataT data = new DataT();
 
-		public ExportPyAlinkScriptResponse(List <String> lines) {
+		public ExportPyAlinkScriptResponse(List<String> lines) {
 			super("OK");
 			this.data.lines = lines;
 		}
 
+		@ApiModel(value = "ExportPyAlinkScriptResponseDataT")
 		static class DataT {
 			/**
 			 * Code lines
 			 */
-			public List <String> lines;
+			public List<String> lines;
 		}
 	}
 
@@ -217,6 +224,7 @@ public class ExperimentController {
 			this.data.experiment = experiment;
 		}
 
+		@ApiModel(value = "GetExperimentResponseDataT")
 		static class DataT {
 			/**
 			 * Experiment
