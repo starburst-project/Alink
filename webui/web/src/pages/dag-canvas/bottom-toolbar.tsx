@@ -11,7 +11,7 @@ import classNames from "classnames";
 import { useObservableState } from "@/common/hooks/useObservableState";
 import { useExperimentGraph } from "@/pages/rx-models/experiment-graph";
 import styles from "./bottom-toolbar.less";
-import { exportScriptReq } from "@/requests/graph";
+import { exportPyAlinkScriptUsingGET } from "@/services/alink-web/experimentController";
 
 interface Props {
   experimentId: string;
@@ -54,9 +54,9 @@ export const BottomToolbar: React.FC<Props> = (props) => {
   const [code, setCode] = useState("");
 
   const onExportScript = useCallback(async () => {
-    const { lines }: { lines: string[] } = await exportScriptReq();
+    const lines = (await exportPyAlinkScriptUsingGET({})).data;
     setIsModalVisible(true);
-    setCode(lines.join("\n"));
+    setCode(lines?.lines?.join("\n")?? "");
   }, [expGraph]);
 
   const handleModalOk = () => {
@@ -68,11 +68,11 @@ export const BottomToolbar: React.FC<Props> = (props) => {
   };
 
   const openFlinkUI = () => {
-    window.open("http://localhost:9090/flinkui/", "_blank");
+    window.open("/flinkui/", "_blank");
   };
 
   const openNotebook = () => {
-    window.open("http://localhost:9090/notebook/", "_blank");
+    window.open("/notebook/", "_blank");
   };
 
   const runningConfigs = [

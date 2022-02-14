@@ -2,9 +2,8 @@ import React, { useEffect } from "react";
 import { Form, Input } from "antd";
 import { useObservableState } from "@/common/hooks/useObservableState";
 import { useExperimentGraph } from "@/pages/rx-models/experiment-graph";
-import { getExperimentReq, updateExperimentReq } from "@/requests/graph";
 import { useRequest } from "umi";
-import { getExperimentUsingGET } from "@/services/alink-web/experimentController";
+import { getExperimentUsingGET, updateExperimentUsingPOST } from "@/services/alink-web/experimentController";
 
 export interface Props {
   name: string;
@@ -19,20 +18,18 @@ export const ExperimentForm: React.FC<Props> = ({ experimentId, name }) => {
 
   const onValuesChange = (changes: any) => {
     if ("parallelism" in changes) {
-      updateExperimentReq(
-        JSON.stringify({
+      updateExperimentUsingPOST({
+        config: JSON.stringify({
           parallelism: changes["parallelism"] || "2",
         })
-      );
+      })
     }
   };
 
   const {data} = useRequest(getExperimentUsingGET);
 
   useEffect(() => {
-    const configStr = data?.config;
-
-    const config = configStr ? JSON.parse(configStr) : null;
+    const config = JSON.parse(data?.experiment?.config ?? "{}");
 
     if (config && "parallelim" in config) {
       form.setFieldsValue({

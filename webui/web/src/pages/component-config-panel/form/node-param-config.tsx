@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Form, Input } from "antd";
-import { getNodeParamReq, updateNodeParamReq } from "@/requests/graph";
-import { getAlgoConfig } from "@/requests/algo";
+import { getAlgoConfig } from "@/common/algo";
+import { getNodeParamUsingGET, updateParamUsingPOST } from "@/services/alink-web/nodeParamController";
 
 export interface Props {
   node: { id: number; className: string };
@@ -11,18 +11,26 @@ export const NodeParamForm: React.FC<Props> = ({ node }: Props) => {
   const [form] = Form.useForm();
 
   const onValuesChange = (data: any) => {
-    updateNodeParamReq(node.id, data, []);
+    updateParamUsingPOST({
+      nodeId: node.id,
+      paramsToUpdate: data,
+      paramsToDel: []
+    })
   };
 
   useEffect(() => {
     if (node?.id) {
-      getNodeParamReq(node.id).then((d) => {
-        let paramMap: { [name: string]: string | null } = {};
-        for (const { key, value } of d.parameters) {
-          paramMap[key] = value;
+      getNodeParamUsingGET({
+        node_id: node.id
+      }).then((response) => {
+        let paramMap: { [name: string]: string | null | undefined } = {};
+        for (const { key, value } of response?.data?.parameters ?? []) {
+          if (key) {
+            paramMap[key] = value;
+          }
         }
         form.setFieldsValue(paramMap);
-      });
+      })
     }
   }, [node]);
 

@@ -32,13 +32,12 @@ import { copyNode } from "@/mock/graph";
 import {
   convertNode,
   convertGraph,
-  addEdgeReq,
-  delEdgeReq,
-  runGraphReq,
-} from "@/requests/graph";
+} from "@/common/graph";
 import { queryGraphStatus, stopGraphRun } from "@/mock/status";
-import { getExperimentContentUsingGET } from "@/services/alink-web/experimentController";
+import { getExperimentContentUsingGET, runExperimentUsingGET } from "@/services/alink-web/experimentController";
 import { addNodeUsingPOST, deleteNodeUsingGET, getNodeUsingGET, updateNodeUsingGET } from "@/services/alink-web/nodeController";
+import { addEdgeUsingPOST, deleteEdgeUsingGET } from "@/services/alink-web/edgeController";
+import { parse } from "marked";
 
 export function parseStatus(data: NExecutionStatus.ExecutionStatus) {
   const { execInfo, instStatus } = data;
@@ -520,7 +519,12 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
           inputPortId: target.port,
         };
         edge.setData(data);
-        addEdgeReq(source.cell, target.cell, source.port, target.port);
+        addEdgeUsingPOST({
+          srcNodeId: parseInt(source.cell),
+          dstNodeId: parseInt(target.cell),
+          srcNodePort: parseInt(source.port.split("-")[2]),
+          dstNodePort: parseInt(target.port.split("-")[2])
+        })
         this.updateExperimentGraph([], [data]);
       }
     }
@@ -532,7 +536,9 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
     try {
       const { edge } = args;
       console.warn(`edge = ${JSON.stringify(edge)}`);
-      await delEdgeReq(edge.data.id);
+      await deleteEdgeUsingGET({
+        edge_id: edge.data.id
+      });
       const { target } = edge;
       const { cell: nodeId, port: portId } = target as any;
       if (nodeId) {
@@ -664,7 +670,9 @@ class ExperimentGraph extends GraphCore<BaseNode, BaseEdge> {
     try {
       // eslint-disable-next-line: no-this-assignment
       const { experimentId, nodeMetas = [] } = this;
-      await runGraphReq(experimentId);
+      await runExperimentUsingGET({
+        experiment_id: parseInt(experimentId)
+      })
       this.running$.next(true);
       this.clearContextMenuInfo();
       this.loadExecutionStatus(experimentId); // 发起执行状态查询

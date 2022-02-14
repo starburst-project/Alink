@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { useCallback, useState } from "react";
-import { algoData } from "@/requests/algo-config";
-import { searchByKeyword } from "@/requests/algo";
+import { algoData } from "@/common/algo-config";
+import { searchByKeyword } from "@/common/algo";
 
 export default () => {
   const [keyword, setKeyword] = useState<string>(""); // 搜索关键字

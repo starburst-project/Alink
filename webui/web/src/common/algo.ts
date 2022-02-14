@@ -1,4 +1,4 @@
-import { algoData } from "@/requests/algo-config";
+import { algoData } from "@/common/algo-config";
 
 const getAllAlgoConfigsImpl: (children: any[]) => any[] = (children: any[]) => {
   const childrenConfigs: any[] = children.map((d) => {
