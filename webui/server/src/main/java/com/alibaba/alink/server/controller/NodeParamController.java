@@ -88,7 +88,7 @@ public class NodeParamController {
 		nodeParamRepository.saveAllAndFlush(toUpdateList);
 		nodeParamRepository.deleteAllById(toRemoveIdSet);
 
-		return BasicResponse.OK();
+		return BasicResponse.success();
 	}
 
 	/**
@@ -139,7 +139,7 @@ public class NodeParamController {
 		public DataT data = new DataT();
 
 		GetNodeParamResponse(List<NodeParam> L) {
-			super("OK");
+			super(true);
 			this.data.parameters = L;
 		}
 

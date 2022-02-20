@@ -44,11 +44,11 @@ class NodeControllerTest {
 		req.positionY = 200.;
 		req.className = "com.alibaba.alink.ShuffleBatchOp";
 		req.nodeType = NodeType.FUNCTION;
-		mvc.perform(post("/node/add")
+		mvc.perform(post("/api/v1/node/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"))
+			.andExpect(jsonPath("$.success").value(true))
 			.andExpect(jsonPath("$.data.id").isNumber());
 	}
 
@@ -60,23 +60,23 @@ class NodeControllerTest {
 		req.positionY = 200.;
 		req.className = "com.alibaba.alink.ShuffleBatchOp";
 		req.nodeType = NodeType.FUNCTION;
-		MvcResult mvcResult = mvc.perform(post("/node/add")
+		MvcResult mvcResult = mvc.perform(post("/api/v1/node/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
 			.andReturn();
 		AddNodeResponse response = gson.fromJson(mvcResult.getResponse().getContentAsString(), AddNodeResponse.class);
 		Long id = response.data.id;
-		mvc.perform(get("/node/del")
+		mvc.perform(get("/api/v1/node/del")
 				.queryParam("node_id", id.toString()))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"));
+			.andExpect(jsonPath("$.success").value(true));
 	}
 
 	@Test
 	public void deleteNodeWithIllegalNodeId() throws Exception {
-		mvc.perform(get("/node/del")
+		mvc.perform(get("/api/v1/node/del")
 				.queryParam("node_id", "100"))
-			.andExpect(jsonPath("$.status").value(BasicResponse.INVALID_ARGUMENT));
+			.andExpect(jsonPath("$.success").value(false));
 	}
 
 	@Test
@@ -89,7 +89,7 @@ class NodeControllerTest {
 			req.positionY = 200.;
 			req.className = "com.alibaba.alink.ShuffleBatchOp";
 			req.nodeType = NodeType.FUNCTION;
-			MvcResult mvcResult = mvc.perform(post("/node/add")
+			MvcResult mvcResult = mvc.perform(post("/api/v1/node/add")
 					.contentType(MediaType.APPLICATION_JSON_VALUE)
 					.content(gson.toJson(req)))
 				.andReturn();
@@ -100,16 +100,16 @@ class NodeControllerTest {
 
 		String newName = "bca";
 		{
-			mvc.perform(get("/node/update")
+			mvc.perform(get("/api/v1/node/update")
 				.param("node_id", String.valueOf(id))
 				.param("name", newName))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("OK"));
+				.andExpect(jsonPath("$.success").value(true));
 		}
 
-		MvcResult mvcResult = mvc.perform(get("/experiment/get_graph"))
+		MvcResult mvcResult = mvc.perform(get("/api/v1/experiment/get_graph"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"))
+			.andExpect(jsonPath("$.success").value(true))
 			.andReturn();
 		GetExperimentGraphResponse getExperimentResponse = gson
 			.fromJson(mvcResult.getResponse().getContentAsString(), GetExperimentGraphResponse.class);

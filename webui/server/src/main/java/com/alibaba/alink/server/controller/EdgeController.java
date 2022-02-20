@@ -67,7 +67,7 @@ public class EdgeController {
 									@RequestParam("edge_id") Long edgeId) {
 		Edge edge = experimentService.secureGetEdge(experimentId, edgeId);
 		edgeRepository.delete(edge);
-		return BasicResponse.OK();
+		return BasicResponse.success();
 	}
 
 	/**
@@ -111,7 +111,7 @@ public class EdgeController {
 		public DataT data = new DataT();
 
 		public AddEdgeResponse(Long id) {
-			super("OK");
+			super(true);
 			this.data.id = id;
 		}
 

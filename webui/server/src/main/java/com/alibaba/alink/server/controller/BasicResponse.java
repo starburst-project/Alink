@@ -1,82 +1,76 @@
 package com.alibaba.alink.server.controller;
 
 import javax.validation.constraints.NotNull;
+
+import com.alibaba.alink.server.excpetion.ErrorShowType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 
+/**
+ * https://umijs.org/zh-CN/plugins/plugin-request
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BasicResponse implements Serializable {
 
-	/**
-	 * 成功
-	 */
-	public static String OK = "OK";
-
-	/**
-	 * 输入参数错误
-	 */
-	public static String INVALID_ARGUMENT = "INVALID_ARGUMENT";
-
-	/**
-	 * 没有权限
-	 */
-	public static String NO_PERMISSION = "NO_PERMISSION";
-
-	/**
-	 * 服务内部错误
-	 */
-	public static String INTERNAL_ERROR = "INTERNAL_ERROR";
-
-	/**
-	 * 返回值的状态信息，OK表示成功，其它失败
-	 * <ol>
-	 *  <li> INVALID_ARGUMENT:    invalid arguments </li>
-	 *  <li> NO_PERMISSION:       no permission to do it </li>
-	 *  <li> UNSUPPORTED:         not support this feature </li>
-	 *  <li> ALREADY_BEEN_KILLED: this experiment has already been killed </li>
-	 *  <li> RECYCLED:            this item has been recycled </li>
-	 *  <li> INTERNAL_ERROR:      unknown error </li>
-	 * </ol>
-	 */
 	@NotNull
-	public String status;
+	private final boolean success;
 
-	/**
-	 * 请求出错时的错误描述信息
-	 */
-	protected String message = null;
+	private final String errorCode;
 
-	public BasicResponse(String status) {
-		this.status = status;
+	private final String errorMessage;
+
+	private final Integer showType;
+
+	private final String traceId;
+
+	private final String host;
+
+	public BasicResponse(boolean success) {
+		this(success, null, null);
 	}
 
-	public BasicResponse(String status, String message) {
-		this.status = status;
-		this.message = message;
+	public BasicResponse(boolean success, String errorCode, String errorMessage) {
+		this(success, errorCode, errorMessage, null, null, null);
 	}
 
-	public static BasicResponse OK() {
-		return new BasicResponse(OK);
+	public BasicResponse(
+		boolean success, String errorCode, String errorMessage,
+		Integer showType, String traceId, String host) {
+
+		this.success = success;
+		this.errorCode = errorCode;
+		this.errorMessage = errorMessage;
+		this.showType = showType;
+		this.traceId = traceId;
+		this.host = host;
 	}
 
-	public static BasicResponse FAIL() {
-		return new BasicResponse(INTERNAL_ERROR);
+	public boolean isSuccess() {
+		return success;
 	}
 
-	public String getStatus() {
-		return status;
+	public String getErrorCode() {
+		return errorCode;
 	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 
-	public String getMessage() {
-		return message;
+	public Integer getShowType() {
+		return showType;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public String getTraceId() {
+		return traceId;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public static BasicResponse success() {
+		return new BasicResponse(true);
 	}
 }

@@ -3,6 +3,7 @@ package com.alibaba.alink.server.controller;
 import com.alibaba.alink.server.domain.Edge;
 import com.alibaba.alink.server.domain.Experiment;
 import com.alibaba.alink.server.domain.Node;
+import com.alibaba.alink.server.excpetion.InvalidNodeIdException;
 import com.alibaba.alink.server.repository.EdgeRepository;
 import com.alibaba.alink.server.repository.ExperimentRepository;
 import com.alibaba.alink.server.repository.NodeParamRepository;
@@ -52,9 +53,8 @@ public class ExperimentController {
 	 * @return
 	 */
 	@ApiOperation(value = "Get the entire graph.")
-	@RequestMapping(
+	@GetMapping(
 		value = "/api/v1/experiment/get_graph",
-		method = RequestMethod.GET,
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
 	@Transactional
@@ -124,7 +124,7 @@ public class ExperimentController {
 	public BasicResponse runExperiment(@RequestParam(value = "experiment_id", defaultValue = "1") Long experimentId)
 		throws Exception {
 		experimentService.runExperiment(experimentId);
-		return BasicResponse.OK();
+		return BasicResponse.success();
 	}
 
 	@ApiOperation(value = "Update the experiment.")
@@ -145,7 +145,7 @@ public class ExperimentController {
 			experiment.setConfig(request.config);
 		}
 		experimentRepository.saveAndFlush(experiment);
-		return BasicResponse.OK();
+		return BasicResponse.success();
 	}
 
 	@ApiOperation(value = "Get the experiment.")
@@ -166,7 +166,7 @@ public class ExperimentController {
 		public DataT data = new DataT();
 
 		public GetExperimentGraphResponse(List<Node> nodes, List<Edge> edges) {
-			super("OK");
+			super(true);
 			this.data.nodes = nodes;
 			this.data.edges = edges;
 		}
@@ -188,7 +188,7 @@ public class ExperimentController {
 		public DataT data = new DataT();
 
 		public ExportPyAlinkScriptResponse(List<String> lines) {
-			super("OK");
+			super(true);
 			this.data.lines = lines;
 		}
 
@@ -220,7 +220,7 @@ public class ExperimentController {
 		public DataT data = new DataT();
 
 		public GetExperimentResponse(Experiment experiment) {
-			super("OK");
+			super(true);
 			this.data.experiment = experiment;
 		}
 

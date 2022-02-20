@@ -2,6 +2,7 @@ package com.alibaba.alink.server.controller;
 
 import com.alibaba.alink.server.domain.Node;
 import com.alibaba.alink.server.domain.NodeType;
+import com.alibaba.alink.server.excpetion.InvalidNodeIdException;
 import com.alibaba.alink.server.repository.NodeRepository;
 import com.alibaba.alink.server.service.ExperimentService;
 import io.swagger.annotations.Api;
@@ -74,7 +75,7 @@ public class NodeController {
 									@RequestParam("node_id") Long nodeId) {
 		Node node = experimentService.secureGetNode(experimentId, nodeId);
 		nodeRepository.delete(node);
-		return BasicResponse.OK();
+		return BasicResponse.success();
 	}
 
 	/**
@@ -110,7 +111,7 @@ public class NodeController {
 			node.setPositionY(y);
 		}
 		nodeRepository.saveAndFlush(node);
-		return BasicResponse.OK();
+		return BasicResponse.success();
 	}
 
 	/**
@@ -179,7 +180,7 @@ public class NodeController {
 		public DataT data = new DataT();
 
 		public AddNodeResponse(Long id) {
-			super("OK");
+			super(true);
 			this.data.id = id;
 		}
 
@@ -199,7 +200,7 @@ public class NodeController {
 		public DataT data = new DataT();
 
 		public GetNodeResponse(Node node) {
-			super("OK");
+			super(true);
 			this.data.node = node;
 		}
 

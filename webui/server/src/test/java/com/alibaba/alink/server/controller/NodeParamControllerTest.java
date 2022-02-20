@@ -47,11 +47,11 @@ class NodeParamControllerTest {
 		req.positionY = 200.;
 		req.className = "com.alibaba.alink.ShuffleBatchOp";
 		req.nodeType = NodeType.FUNCTION;
-		MvcResult mvcResult = mvc.perform(post("/node/add")
+		MvcResult mvcResult = mvc.perform(post("/api/v1/node/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"))
+			.andExpect(jsonPath("$.success").value(true))
 			.andExpect(jsonPath("$.data.id").isNumber())
 			.andReturn();
 		AddNodeResponse response = gson.fromJson(mvcResult.getResponse().getContentAsString(), AddNodeResponse.class);
@@ -61,10 +61,10 @@ class NodeParamControllerTest {
 	@Test
 	public void testGetEmtpyParams() throws Exception {
 		Long nodeId = addNode();
-		MvcResult mvcResult = mvc.perform(get("/param/get")
+		MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
 				.param("node_id", String.valueOf(nodeId)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"))
+			.andExpect(jsonPath("$.success").value(true))
 			.andExpect(jsonPath("$.data.parameters").value(Matchers.empty()))
 			.andReturn();
 	}
@@ -82,16 +82,16 @@ class NodeParamControllerTest {
 		request.paramsToUpdate = toUpdate;
 		request.paramsToDel = new HashSet <>();
 
-		mvc.perform(post("/param/update")
+		mvc.perform(post("/api/v1/param/update")
 				.content(gson.toJson(request))
 				.contentType(MediaType.APPLICATION_JSON_VALUE))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"));
+			.andExpect(jsonPath("$.success").value(true));
 
-		MvcResult mvcResult = mvc.perform(get("/param/get")
+		MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
 				.param("node_id", String.valueOf(nodeId)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"))
+			.andExpect(jsonPath("$.success").value(true))
 			.andExpect(jsonPath("$.data.parameters").value(Matchers.hasSize(2)))
 			.andReturn();
 		System.out.println(mvcResult.getResponse().getContentAsString());
@@ -111,16 +111,16 @@ class NodeParamControllerTest {
 			request.paramsToUpdate = toUpdate;
 			request.paramsToDel = new HashSet <>();
 
-			mvc.perform(post("/param/update")
+			mvc.perform(post("/api/v1/param/update")
 					.content(gson.toJson(request))
 					.contentType(MediaType.APPLICATION_JSON_VALUE))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("OK"));
+				.andExpect(jsonPath("$.success").value(true));
 
-			MvcResult mvcResult = mvc.perform(get("/param/get")
+			MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
 					.param("node_id", String.valueOf(nodeId)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("OK"))
+				.andExpect(jsonPath("$.success").value(true))
 				.andExpect(jsonPath("$.data.parameters").value(Matchers.hasSize(2)))
 				.andReturn();
 		}
@@ -136,16 +136,16 @@ class NodeParamControllerTest {
 			request.paramsToUpdate = toUpdate;
 			request.paramsToDel = toDelete;
 
-			mvc.perform(post("/param/update")
+			mvc.perform(post("/api/v1/param/update")
 					.content(gson.toJson(request))
 					.contentType(MediaType.APPLICATION_JSON_VALUE))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("OK"));
+				.andExpect(jsonPath("$.success").value(true));
 
-			MvcResult mvcResult = mvc.perform(get("/param/get")
+			MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
 					.param("node_id", String.valueOf(nodeId)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("OK"))
+				.andExpect(jsonPath("$.success").value(true))
 				.andExpect(jsonPath("$.data.parameters").value(Matchers.hasSize(1)))
 				.andReturn();
 		}

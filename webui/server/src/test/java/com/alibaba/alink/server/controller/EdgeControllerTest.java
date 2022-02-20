@@ -40,11 +40,11 @@ class EdgeControllerTest {
 		req.srcNodePort = 0;
 		req.dstNodeId = 2L;
 		req.dstNodePort = 0;
-		mvc.perform(post("/edge/add")
+		mvc.perform(post("/api/v1/edge/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"))
+			.andExpect(jsonPath("$.success").value(true))
 			.andExpect(jsonPath("$.data.id").isNumber());
 	}
 
@@ -55,22 +55,22 @@ class EdgeControllerTest {
 		req.srcNodePort = 0;
 		req.dstNodeId = 2L;
 		req.dstNodePort = 0;
-		MvcResult mvcResult = mvc.perform(post("/edge/add")
+		MvcResult mvcResult = mvc.perform(post("/api/v1/edge/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
 			.andReturn();
 		AddEdgeResponse response = gson.fromJson(mvcResult.getResponse().getContentAsString(), AddEdgeResponse.class);
 		Long id = response.data.id;
-		mvc.perform(get("/edge/del")
+		mvc.perform(get("/api/v1/edge/del")
 				.queryParam("edge_id", id.toString()))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("OK"));
+			.andExpect(jsonPath("$.success").value(true));
 	}
 
 	@Test
 	public void deleteEdgeWithIllegalNodeId() throws Exception {
-		mvc.perform(get("/edge/del")
+		mvc.perform(get("/api/v1/edge/del")
 				.queryParam("edge_id", "100"))
-			.andExpect(jsonPath("$.status").value(BasicResponse.INVALID_ARGUMENT));
+			.andExpect(jsonPath("$.success").value(false));
 	}
 }
