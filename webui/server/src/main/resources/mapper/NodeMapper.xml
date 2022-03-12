@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alibaba.alink.server.mapper.NodeMapper">
+  <resultMap id="BaseResultMap" type="com.alibaba.alink.server.domain.Node">
+    <!--@mbg.generated-->
+    <!--@Table node-->
+    <id column="node_id" jdbcType="BIGINT" property="nodeId" />
+    <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+    <result column="experiment_id" jdbcType="BIGINT" property="experimentId" />
+    <result column="type" jdbcType="SMALLINT" property="type" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="position_x" jdbcType="DOUBLE" property="positionX" />
+    <result column="position_y" jdbcType="DOUBLE" property="positionY" />
+    <result column="class_name" jdbcType="VARCHAR" property="className" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    node_id, gmt_create, gmt_modified, experiment_id, `type`, `name`, position_x, position_y, 
+    class_name
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from node
+    where node_id = #{nodeId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    <!--@mbg.generated-->
+    delete from node
+    where node_id = #{nodeId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.alibaba.alink.server.domain.Node">
+    <!--@mbg.generated-->
+    insert into node (node_id, gmt_create, gmt_modified, 
+      experiment_id, `type`, `name`, 
+      position_x, position_y, class_name
+      )
+    values (#{nodeId,jdbcType=BIGINT}, #{gmtCreate,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, 
+      #{experimentId,jdbcType=BIGINT}, #{type,jdbcType=SMALLINT}, #{name,jdbcType=VARCHAR}, 
+      #{positionX,jdbcType=DOUBLE}, #{positionY,jdbcType=DOUBLE}, #{className,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.alibaba.alink.server.domain.Node">
+    <!--@mbg.generated-->
+    insert into node
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="nodeId != null">
+        node_id,
+      </if>
+      <if test="gmtCreate != null">
+        gmt_create,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+      <if test="experimentId != null">
+        experiment_id,
+      </if>
+      <if test="type != null">
+        `type`,
+      </if>
+      <if test="name != null">
+        `name`,
+      </if>
+      <if test="positionX != null">
+        position_x,
+      </if>
+      <if test="positionY != null">
+        position_y,
+      </if>
+      <if test="className != null">
+        class_name,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="nodeId != null">
+        #{nodeId,jdbcType=BIGINT},
+      </if>
+      <if test="gmtCreate != null">
+        #{gmtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="experimentId != null">
+        #{experimentId,jdbcType=BIGINT},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=SMALLINT},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="positionX != null">
+        #{positionX,jdbcType=DOUBLE},
+      </if>
+      <if test="positionY != null">
+        #{positionY,jdbcType=DOUBLE},
+      </if>
+      <if test="className != null">
+        #{className,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.alibaba.alink.server.domain.Node">
+    <!--@mbg.generated-->
+    update node
+    <set>
+      <if test="gmtCreate != null">
+        gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="experimentId != null">
+        experiment_id = #{experimentId,jdbcType=BIGINT},
+      </if>
+      <if test="type != null">
+        `type` = #{type,jdbcType=SMALLINT},
+      </if>
+      <if test="name != null">
+        `name` = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="positionX != null">
+        position_x = #{positionX,jdbcType=DOUBLE},
+      </if>
+      <if test="positionY != null">
+        position_y = #{positionY,jdbcType=DOUBLE},
+      </if>
+      <if test="className != null">
+        class_name = #{className,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where node_id = #{nodeId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.alibaba.alink.server.domain.Node">
+    <!--@mbg.generated-->
+    update node
+    set gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+      gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      experiment_id = #{experimentId,jdbcType=BIGINT},
+      `type` = #{type,jdbcType=SMALLINT},
+      `name` = #{name,jdbcType=VARCHAR},
+      position_x = #{positionX,jdbcType=DOUBLE},
+      position_y = #{positionY,jdbcType=DOUBLE},
+      class_name = #{className,jdbcType=VARCHAR}
+    where node_id = #{nodeId,jdbcType=BIGINT}
+  </update>
+
+<!--auto generated by MybatisCodeHelper on 2022-03-12-->
+  <select id="selectByExperimentId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from node
+    where experiment_id=#{experimentId,jdbcType=BIGINT}
+  </select>
+</mapper>

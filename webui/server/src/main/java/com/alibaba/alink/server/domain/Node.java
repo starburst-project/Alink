@@ -1,158 +1,125 @@
 package com.alibaba.alink.server.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.Table;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import java.util.Date;
 
-import java.sql.Timestamp;
-
-@Entity
-@Table(name = "alink_node_info", indexes = {
-	@Index(name = "idx_node_id_unq", columnList = "id", unique = true),
-	@Index(name = "idx_node_experiment_id", columnList = "experimentId")
-})
+/**
+ * 实验节点信息
+ */
 public class Node {
+	/**
+	 * 节点id
+	 */
+	private Long nodeId;
 
 	/**
-	 * ID
+	 * 创建时间
 	 */
-	@Id
-	@GeneratedValue
-	Long id;
+	private Date gmtCreate;
 
 	/**
-	 * Creation timestamp
+	 * 修改时间
 	 */
-	@CreationTimestamp
-	@Column(nullable = false, updatable = false)
-	Timestamp gmtCreate;
+	private Date gmtModified;
 
 	/**
-	 * Update timestamp
+	 * 实验id
 	 */
-	@UpdateTimestamp
-	@Column(nullable = false)
-	Timestamp gmtModified;
+	private Long experimentId;
 
 	/**
-	 * Experiment ID
+	 * 节点类型
 	 */
-	@Column(nullable = false)
-	Long experimentId;
+	private Short type;
 
 	/**
-	 * Node type
+	 * 节点显示名字
 	 */
-	@Column(nullable = false)
-	NodeType type;
+	private String name;
 
 	/**
-	 * Node display name
+	 * 节点位置x坐标
 	 */
-	@Column(nullable = false)
-	String name;
+	private Double positionX;
 
 	/**
-	 * X coordinate of node position
+	 * 节点位置y坐标
 	 */
-	@Column(nullable = false)
-	Double positionX;
+	private Double positionY;
 
 	/**
-	 * Y coordinate of node position
+	 * 节点算法名字
 	 */
-	@Column(nullable = false)
-	Double positionY;
+	private String className;
 
-	/**
-	 * Algorithm class name
-	 */
-	@Column(nullable = false)
-	String className;
-
-	public Long getId() {
-		return id;
+	public Long getNodeId() {
+		return nodeId;
 	}
 
-	public Node setId(Long id) {
-		this.id = id;
-		return this;
+	public void setNodeId(Long nodeId) {
+		this.nodeId = nodeId;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return gmtCreate;
 	}
 
-	public Node setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
-		return this;
 	}
 
-	public Timestamp getGmtModified() {
+	public Date getGmtModified() {
 		return gmtModified;
 	}
 
-	public Node setGmtModified(Timestamp gmtModified) {
+	public void setGmtModified(Date gmtModified) {
 		this.gmtModified = gmtModified;
-		return this;
 	}
 
 	public Long getExperimentId() {
 		return experimentId;
 	}
 
-	public Node setExperimentId(Long experimentId) {
+	public void setExperimentId(Long experimentId) {
 		this.experimentId = experimentId;
-		return this;
 	}
 
-	public NodeType getType() {
+	public Short getType() {
 		return type;
 	}
 
-	public Node setType(NodeType type) {
+	public void setType(Short type) {
 		this.type = type;
-		return this;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Node setName(String name) {
+	public void setName(String name) {
 		this.name = name;
-		return this;
 	}
 
 	public Double getPositionX() {
 		return positionX;
 	}
 
-	public Node setPositionX(Double positionX) {
+	public void setPositionX(Double positionX) {
 		this.positionX = positionX;
-		return this;
 	}
 
 	public Double getPositionY() {
 		return positionY;
 	}
 
-	public Node setPositionY(Double positionY) {
+	public void setPositionY(Double positionY) {
 		this.positionY = positionY;
-		return this;
 	}
 
 	public String getClassName() {
 		return className;
 	}
 
-	public Node setClassName(String className) {
+	public void setClassName(String className) {
 		this.className = className;
-		return this;
 	}
 }

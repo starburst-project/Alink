@@ -1,10 +1,8 @@
 package com.alibaba.alink.server.controller;
 
-import javax.validation.constraints.NotNull;
-
-import com.alibaba.alink.server.excpetion.ErrorShowType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**

@@ -1,96 +1,73 @@
 package com.alibaba.alink.server.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.Table;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import java.util.Date;
 
-import java.sql.Timestamp;
-
-import static javax.persistence.GenerationType.IDENTITY;
-
-@Entity
-@Table(name = "alink_experiment_info", indexes = {
-	@Index(name = "idx_experiment_id_unq", columnList = "id", unique = true)
-})
+/**
+ * 实验信息
+ */
 public class Experiment {
+	/**
+	 * 实验id
+	 */
+	private Long experimentId;
 
 	/**
-	 * ID
+	 * 实验名
 	 */
-	@Id
-	@GeneratedValue(strategy = IDENTITY)
-	Long id;
-
-	/**
-	 * Creation timestamp
-	 */
-	@CreationTimestamp
-	@Column(nullable = false, updatable = false)
-	Timestamp gmtCreate;
-
-	/**
-	 * Update timestamp
-	 */
-	@UpdateTimestamp
-	@Column(nullable = false)
-	Timestamp gmtModified;
-	/**
-	 * Experiment configuration, in JSON format
-	 */
-	String config;
-	/**
-	 * Name
-	 */
-	@Column(length = 255, nullable = false)
 	private String name;
 
-	public Long getId() {
-		return id;
+	/**
+	 * 创建时间
+	 */
+	private Date gmtCreate;
+
+	/**
+	 * 修改时间
+	 */
+	private Date gmtModified;
+
+	/**
+	 * 实验配置
+	 */
+	private String config;
+
+	public Long getExperimentId() {
+		return experimentId;
 	}
 
-	public Experiment setId(Long id) {
-		this.id = id;
-		return this;
-	}
-
-	public Timestamp getGmtCreate() {
-		return gmtCreate;
-	}
-
-	public Experiment setGmtCreate(Timestamp gmtCreate) {
-		this.gmtCreate = gmtCreate;
-		return this;
-	}
-
-	public Timestamp getGmtModified() {
-		return gmtModified;
-	}
-
-	public Experiment setGmtModified(Timestamp gmtModified) {
-		this.gmtModified = gmtModified;
-		return this;
-	}
-
-	public String getConfig() {
-		return config;
-	}
-
-	public Experiment setConfig(String config) {
-		this.config = config;
-		return this;
+	public void setExperimentId(Long experimentId) {
+		this.experimentId = experimentId;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Experiment setName(String name) {
+	public void setName(String name) {
 		this.name = name;
-		return this;
+	}
+
+	public Date getGmtCreate() {
+		return gmtCreate;
+	}
+
+	public void setGmtCreate(Date gmtCreate) {
+		this.gmtCreate = gmtCreate;
+	}
+
+	public Date getGmtModified() {
+		return gmtModified;
+	}
+
+	public void setGmtModified(Date gmtModified) {
+		this.gmtModified = gmtModified;
+	}
+
+	public String getConfig() {
+		return config;
+	}
+
+	public void setConfig(String config) {
+		this.config = config;
 	}
 }

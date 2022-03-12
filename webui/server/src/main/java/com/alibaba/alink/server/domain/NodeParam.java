@@ -1,129 +1,99 @@
 package com.alibaba.alink.server.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.Table;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import java.util.Date;
 
-import java.sql.Timestamp;
-
-@Table(name = "ALINK_NODE_PARAM_INFO", indexes = {
-	@Index(name = "idx_nodeparam_id_unq", columnList = "id", unique = true),
-	@Index(name = "idx_nodeparam_experimentid", columnList = "experimentId"),
-	@Index(name = "idx_nodeparam_nodeid_pkey_unq", columnList = "nodeId, pkey", unique = true)
-})
-@Entity
+/**
+ * 节点参数信息
+ */
 public class NodeParam {
+	/**
+	 * 节点参数信息id
+	 */
+	private Long nodeParamId;
 
 	/**
-	 * ID
+	 * 创建时间
 	 */
-	@Id
-	@GeneratedValue
-	Long id;
+	private Date gmtCreate;
 
 	/**
-	 * Creation timestamp
+	 * 修改时间
 	 */
-	@CreationTimestamp
-	@Column(nullable = false, updatable = false)
-	Timestamp gmtCreate;
+	private Date gmtModified;
 
 	/**
-	 * Update timestamp
+	 * 实验id
 	 */
-	@UpdateTimestamp
-	@Column(nullable = false)
-	Timestamp gmtModified;
+	private Long experimentId;
 
 	/**
-	 * Experiment ID
+	 * 节点id
 	 */
-	@Column(nullable = false)
-	Long experimentId;
+	private Long nodeId;
 
 	/**
-	 * Node ID
+	 * 参数key
 	 */
-	@Column(nullable = false)
-	Long nodeId;
+	private String key;
 
 	/**
-	 * parameter key
+	 * 参数值
 	 */
-	@Column(name="pkey", nullable = false)
-	String key;
+	private String value;
 
-	/**
-	 * parameter value, after jsonized
-	 */
-	@Column(length = 256 * 1024, nullable = false)
-	String value;
-
-	public Long getId() {
-		return id;
+	public Long getNodeParamId() {
+		return nodeParamId;
 	}
 
-	public NodeParam setId(Long id) {
-		this.id = id;
-		return this;
+	public void setNodeParamId(Long nodeParamId) {
+		this.nodeParamId = nodeParamId;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return gmtCreate;
 	}
 
-	public NodeParam setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
-		return this;
 	}
 
-	public Timestamp getGmtModified() {
+	public Date getGmtModified() {
 		return gmtModified;
 	}
 
-	public NodeParam setGmtModified(Timestamp gmtModified) {
+	public void setGmtModified(Date gmtModified) {
 		this.gmtModified = gmtModified;
-		return this;
 	}
 
 	public Long getExperimentId() {
 		return experimentId;
 	}
 
-	public NodeParam setExperimentId(Long experimentId) {
+	public void setExperimentId(Long experimentId) {
 		this.experimentId = experimentId;
-		return this;
 	}
 
 	public Long getNodeId() {
 		return nodeId;
 	}
 
-	public NodeParam setNodeId(Long nodeId) {
+	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
-		return this;
 	}
 
 	public String getKey() {
 		return key;
 	}
 
-	public NodeParam setKey(String key) {
+	public void setKey(String key) {
 		this.key = key;
-		return this;
 	}
 
 	public String getValue() {
 		return value;
 	}
 
-	public NodeParam setValue(String value) {
+	public void setValue(String value) {
 		this.value = value;
-		return this;
 	}
 }

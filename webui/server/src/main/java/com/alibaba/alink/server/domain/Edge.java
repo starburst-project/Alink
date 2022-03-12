@@ -1,144 +1,112 @@
 package com.alibaba.alink.server.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import java.util.Date;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.sql.Timestamp;
-
-@Entity
-@Table(name = "alink_edge_info", indexes = {
-	@Index(name = "idx_edge_id_unq", columnList = "id", unique = true),
-	@Index(name = "idx_edge_experiment_id", columnList = "experimentId")
-})
+/**
+ * 实验边信息
+ */
 public class Edge {
+	/**
+	 * 边id
+	 */
+	private Long edgeId;
 
 	/**
-	 * ID
+	 * 创建时间
 	 */
-	@Id
-	@GeneratedValue
-	Long id;
+	private Date gmtCreate;
 
 	/**
-	 * Creation timestamp
+	 * 修改时间
 	 */
-	@CreationTimestamp
-	@Column(nullable = false, updatable = false)
-	Timestamp gmtCreate;
+	private Date gmtModified;
 
 	/**
-	 * Update timestamp
+	 * 实验id
 	 */
-	@UpdateTimestamp
-	@Column(nullable = false)
-	Timestamp gmtModified;
+	private Long experimentId;
 
 	/**
-	 * Experiment ID
+	 * 源组件id
 	 */
-	@Column(nullable = false)
-	Long experimentId;
+	private Long srcNodeId;
 
 	/**
-	 * Source node ID
+	 * 源组件端口
 	 */
-	@Column(nullable = false)
-	Long srcNodeId;
+	private Short srcNodePort;
 
 	/**
-	 * Source node port
+	 * 目标组件id
 	 */
-	@Column(nullable = false)
-	Short srcNodePort;
+	private Long dstNodeId;
 
 	/**
-	 * Destination node ID
+	 * 目标组件端口
 	 */
-	@Column(nullable = false)
-	Long dstNodeId;
+	private Short dstNodePort;
 
-	/**
-	 * Destination node port
-	 */
-	@Column(nullable = false)
-	Short dstNodePort;
-
-	public Long getId() {
-		return id;
+	public Long getEdgeId() {
+		return edgeId;
 	}
 
-	public Edge setId(Long id) {
-		this.id = id;
-		return this;
+	public void setEdgeId(Long edgeId) {
+		this.edgeId = edgeId;
 	}
 
-	public Timestamp getGmtCreate() {
+	public Date getGmtCreate() {
 		return gmtCreate;
 	}
 
-	public Edge setGmtCreate(Timestamp gmtCreate) {
+	public void setGmtCreate(Date gmtCreate) {
 		this.gmtCreate = gmtCreate;
-		return this;
 	}
 
-	public Timestamp getGmtModified() {
+	public Date getGmtModified() {
 		return gmtModified;
 	}
 
-	public Edge setGmtModified(Timestamp gmtModified) {
+	public void setGmtModified(Date gmtModified) {
 		this.gmtModified = gmtModified;
-		return this;
 	}
 
 	public Long getExperimentId() {
 		return experimentId;
 	}
 
-	public Edge setExperimentId(Long experimentId) {
+	public void setExperimentId(Long experimentId) {
 		this.experimentId = experimentId;
-		return this;
 	}
 
 	public Long getSrcNodeId() {
 		return srcNodeId;
 	}
 
-	public Edge setSrcNodeId(Long srcNodeId) {
+	public void setSrcNodeId(Long srcNodeId) {
 		this.srcNodeId = srcNodeId;
-		return this;
 	}
 
 	public Short getSrcNodePort() {
 		return srcNodePort;
 	}
 
-	public Edge setSrcNodePort(Short srcNodePort) {
+	public void setSrcNodePort(Short srcNodePort) {
 		this.srcNodePort = srcNodePort;
-		return this;
 	}
 
 	public Long getDstNodeId() {
 		return dstNodeId;
 	}
 
-	public Edge setDstNodeId(Long dstNodeId) {
+	public void setDstNodeId(Long dstNodeId) {
 		this.dstNodeId = dstNodeId;
-		return this;
 	}
 
 	public Short getDstNodePort() {
 		return dstNodePort;
 	}
 
-	public Edge setDstNodePort(Short dstNodePort) {
+	public void setDstNodePort(Short dstNodePort) {
 		this.dstNodePort = dstNodePort;
-		return this;
 	}
 }

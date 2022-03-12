@@ -14,19 +14,28 @@ import java.util.List;
 class ExportScriptUtilsTest {
 
 	Node makeNode(Long id, String name, String className) {
-		return new Node().setId(id).setName(name).setClassName(className);
+		Node node = new Node();
+		node.setNodeId(id);
+		node.setName(name);
+		node.setClassName(className);
+		return node;
 	}
 
 	Edge makeEdge(Long srcNodeId, Short srcNodePort, Long dstNodeId, Short dstNodePort) {
-		return new Edge()
-			.setSrcNodeId(srcNodeId).setSrcNodePort(srcNodePort)
-			.setDstNodeId(dstNodeId).setDstNodePort(dstNodePort);
+		Edge edge = new Edge();
+		edge.setSrcNodeId(srcNodeId);
+		edge.setSrcNodePort(srcNodePort);
+		edge.setDstNodeId(dstNodeId);
+		edge.setDstNodePort(dstNodePort);
+		return edge;
 	}
 
 	NodeParam makeNodeParam(Long nodeId, String key, String value) {
-		return new NodeParam().setNodeId(nodeId)
-			.setKey(key)
-			.setValue(value);
+		NodeParam nodeParam = new NodeParam();
+		nodeParam.setNodeId(nodeId);
+		nodeParam.setKey(key);
+		nodeParam.setValue(value);
+		return nodeParam;
 	}
 
 	@Test

@@ -163,7 +163,7 @@ public class ExportScriptUtils {
 		throws ClassNotFoundException {
 		Map <Long, Node> id2NodeMap = new HashMap <>();
 		for (Node node : nodes) {
-			id2NodeMap.put(node.getId(), node);
+			id2NodeMap.put(node.getNodeId(), node);
 		}
 
 		Map <Long, List <Edge>> outEdges = new HashMap <>();

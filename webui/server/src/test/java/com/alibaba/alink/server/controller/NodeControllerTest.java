@@ -1,15 +1,5 @@
 package com.alibaba.alink.server.controller;
 
-import com.alibaba.alink.server.controller.ExperimentController.GetExperimentGraphResponse;
-import com.alibaba.alink.server.controller.NodeController.AddNodeRequest;
-import com.alibaba.alink.server.controller.NodeController.AddNodeResponse;
-import com.alibaba.alink.server.domain.Node;
-import com.alibaba.alink.server.domain.NodeType;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +7,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import com.alibaba.alink.server.controller.ExperimentController.GetExperimentGraphResponse;
+import com.alibaba.alink.server.controller.NodeController.AddNodeResponse;
+import com.alibaba.alink.server.controller.NodeController.NodeDTO;
+import com.alibaba.alink.server.domain.Node;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -38,12 +39,13 @@ class NodeControllerTest {
 
 	@Test
 	public void addNode() throws Exception {
-		AddNodeRequest req = new NodeController.AddNodeRequest();
+		NodeDTO req = new NodeDTO();
+		req.experimentId = 1L;
 		req.nodeName = "shuffle";
 		req.positionX = 100.;
 		req.positionY = 200.;
 		req.className = "com.alibaba.alink.ShuffleBatchOp";
-		req.nodeType = NodeType.FUNCTION;
+		req.nodeType = NodeDTO.NodeType.FUNCTION;
 		mvc.perform(post("/api/v1/node/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
@@ -54,12 +56,13 @@ class NodeControllerTest {
 
 	@Test
 	public void deleteNode() throws Exception {
-		AddNodeRequest req = new NodeController.AddNodeRequest();
+		NodeDTO req = new NodeDTO();
+		req.experimentId = 1L;
 		req.nodeName = "abc";
 		req.positionX = 100.;
 		req.positionY = 200.;
 		req.className = "com.alibaba.alink.ShuffleBatchOp";
-		req.nodeType = NodeType.FUNCTION;
+		req.nodeType = NodeDTO.NodeType.FUNCTION;
 		MvcResult mvcResult = mvc.perform(post("/api/v1/node/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
@@ -67,6 +70,7 @@ class NodeControllerTest {
 		AddNodeResponse response = gson.fromJson(mvcResult.getResponse().getContentAsString(), AddNodeResponse.class);
 		Long id = response.data.id;
 		mvc.perform(get("/api/v1/node/del")
+				.queryParam("experiment_id", "1")
 				.queryParam("node_id", id.toString()))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.success").value(true));
@@ -75,6 +79,7 @@ class NodeControllerTest {
 	@Test
 	public void deleteNodeWithIllegalNodeId() throws Exception {
 		mvc.perform(get("/api/v1/node/del")
+				.queryParam("experiment_id", "1")
 				.queryParam("node_id", "100"))
 			.andExpect(jsonPath("$.success").value(false));
 	}
@@ -83,12 +88,13 @@ class NodeControllerTest {
 	public void updateNode() throws Exception {
 		Long id;
 		{
-			AddNodeRequest req = new NodeController.AddNodeRequest();
+			NodeDTO req = new NodeDTO();
+			req.experimentId = 1L;
 			req.nodeName = "abc";
 			req.positionX = 100.;
 			req.positionY = 200.;
 			req.className = "com.alibaba.alink.ShuffleBatchOp";
-			req.nodeType = NodeType.FUNCTION;
+			req.nodeType = NodeDTO.NodeType.FUNCTION;
 			MvcResult mvcResult = mvc.perform(post("/api/v1/node/add")
 					.contentType(MediaType.APPLICATION_JSON_VALUE)
 					.content(gson.toJson(req)))
@@ -101,20 +107,22 @@ class NodeControllerTest {
 		String newName = "bca";
 		{
 			mvc.perform(get("/api/v1/node/update")
-				.param("node_id", String.valueOf(id))
-				.param("name", newName))
+					.param("experiment_id", "1")
+					.param("node_id", String.valueOf(id))
+					.param("name", newName))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.success").value(true));
 		}
 
-		MvcResult mvcResult = mvc.perform(get("/api/v1/experiment/get_graph"))
+		MvcResult mvcResult = mvc.perform(get("/api/v1/experiment/get_graph")
+				.param("experiment_id", "1"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.success").value(true))
 			.andReturn();
 		GetExperimentGraphResponse getExperimentResponse = gson
 			.fromJson(mvcResult.getResponse().getContentAsString(), GetExperimentGraphResponse.class);
 		for (Node node : getExperimentResponse.data.nodes) {
-			if (node.getId().equals(id)) {
+			if (node.getNodeId().equals(id)) {
 				Assertions.assertEquals(newName, node.getName());
 			}
 		}

@@ -1,16 +1,23 @@
 package com.alibaba.alink.server.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.alibaba.alink.server.domain.Edge;
-import com.alibaba.alink.server.repository.EdgeRepository;
-import com.alibaba.alink.server.service.ExperimentService;
+import com.alibaba.alink.server.mapper.EdgeMapper;
+import com.alibaba.alink.server.service.api.execution.ExperimentService;
+import com.alibaba.alink.server.service.api.identifier.IdentifierGeneratorService;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -22,13 +29,13 @@ public class EdgeController {
 	ExperimentService experimentService;
 
 	@Autowired
-	EdgeRepository edgeRepository;
+	EdgeMapper edgeMapper;
+
+	@Autowired
+	IdentifierGeneratorService identifierGeneratorService;
 
 	/**
 	 * Add an edge
-	 *
-	 * @param request
-	 * @return
 	 */
 	@ApiOperation(value = "Add edge of the graph.")
 	@RequestMapping(
@@ -37,16 +44,18 @@ public class EdgeController {
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
 	@Transactional
-	public AddEdgeResponse addEdge(@Valid @RequestBody AddEdgeRequest request) {
-		experimentService.checkExperimentId(request.experimentId);
+	public AddEdgeResponse addEdge(@Valid @RequestBody EdgeDTO request) {
+		experimentService.secureCheckAndGetExperiment(request.experimentId);
 		Edge edge = new Edge();
+		edge.setEdgeId(identifierGeneratorService.nextId());
 		edge.setExperimentId(request.experimentId);
 		edge.setSrcNodeId(request.srcNodeId);
 		edge.setSrcNodePort(request.srcNodePort);
 		edge.setDstNodeId(request.dstNodeId);
 		edge.setDstNodePort(request.dstNodePort);
-		edge = edgeRepository.saveAndFlush(edge);
-		return new AddEdgeResponse(edge.getId());
+
+		edgeMapper.insertSelective(edge);
+		return new AddEdgeResponse(edge.getEdgeId());
 	}
 
 	/**
@@ -54,7 +63,6 @@ public class EdgeController {
 	 *
 	 * @param experimentId Experiment ID
 	 * @param edgeId       Edge ID
-	 * @return
 	 */
 	@ApiOperation(value = "Delete edge of the graph.")
 	@RequestMapping(
@@ -63,21 +71,22 @@ public class EdgeController {
 		produces = {MediaType.APPLICATION_JSON_VALUE}
 	)
 	@Transactional
-	public BasicResponse deleteEdge(@RequestParam(value = "experiment_id", defaultValue = "1") Long experimentId,
+	public BasicResponse deleteEdge(@RequestParam(value = "experiment_id") Long experimentId,
 									@RequestParam("edge_id") Long edgeId) {
-		Edge edge = experimentService.secureGetEdge(experimentId, edgeId);
-		edgeRepository.delete(edge);
+		Edge edge = experimentService.secureCheckAndGetEdge(experimentId, edgeId);
+		edgeMapper.deleteByPrimaryKey(edge.getEdgeId());
 		return BasicResponse.success();
 	}
 
 	/**
 	 * Request for add an edge
 	 */
-	static class AddEdgeRequest {
+	static class EdgeDTO {
 		/**
 		 * Experiment ID
 		 */
-		public Long experimentId = 1L;
+		@NotNull
+		public Long experimentId;
 
 		/**
 		 * Source node ID

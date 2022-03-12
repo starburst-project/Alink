@@ -1,4 +1,4 @@
-package com.alibaba.alink.server.service;
+package com.alibaba.alink.server.service.api.execution;
 
 import com.alibaba.alink.server.domain.Edge;
 import com.alibaba.alink.server.domain.Node;

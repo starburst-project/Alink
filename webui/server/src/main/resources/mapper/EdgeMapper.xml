@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alibaba.alink.server.mapper.EdgeMapper">
+  <resultMap id="BaseResultMap" type="com.alibaba.alink.server.domain.Edge">
+    <!--@mbg.generated-->
+    <!--@Table edge-->
+    <id column="edge_id" jdbcType="BIGINT" property="edgeId" />
+    <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+    <result column="experiment_id" jdbcType="BIGINT" property="experimentId" />
+    <result column="src_node_id" jdbcType="BIGINT" property="srcNodeId" />
+    <result column="src_node_port" jdbcType="SMALLINT" property="srcNodePort" />
+    <result column="dst_node_id" jdbcType="BIGINT" property="dstNodeId" />
+    <result column="dst_node_port" jdbcType="SMALLINT" property="dstNodePort" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    edge_id, gmt_create, gmt_modified, experiment_id, src_node_id, src_node_port, dst_node_id, 
+    dst_node_port
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from edge
+    where edge_id = #{edgeId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    <!--@mbg.generated-->
+    delete from edge
+    where edge_id = #{edgeId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.alibaba.alink.server.domain.Edge">
+    <!--@mbg.generated-->
+    insert into edge (edge_id, gmt_create, gmt_modified, 
+      experiment_id, src_node_id, src_node_port, 
+      dst_node_id, dst_node_port)
+    values (#{edgeId,jdbcType=BIGINT}, #{gmtCreate,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, 
+      #{experimentId,jdbcType=BIGINT}, #{srcNodeId,jdbcType=BIGINT}, #{srcNodePort,jdbcType=SMALLINT}, 
+      #{dstNodeId,jdbcType=BIGINT}, #{dstNodePort,jdbcType=SMALLINT})
+  </insert>
+  <insert id="insertSelective" parameterType="com.alibaba.alink.server.domain.Edge">
+    <!--@mbg.generated-->
+    insert into edge
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="edgeId != null">
+        edge_id,
+      </if>
+      <if test="gmtCreate != null">
+        gmt_create,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+      <if test="experimentId != null">
+        experiment_id,
+      </if>
+      <if test="srcNodeId != null">
+        src_node_id,
+      </if>
+      <if test="srcNodePort != null">
+        src_node_port,
+      </if>
+      <if test="dstNodeId != null">
+        dst_node_id,
+      </if>
+      <if test="dstNodePort != null">
+        dst_node_port,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="edgeId != null">
+        #{edgeId,jdbcType=BIGINT},
+      </if>
+      <if test="gmtCreate != null">
+        #{gmtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="experimentId != null">
+        #{experimentId,jdbcType=BIGINT},
+      </if>
+      <if test="srcNodeId != null">
+        #{srcNodeId,jdbcType=BIGINT},
+      </if>
+      <if test="srcNodePort != null">
+        #{srcNodePort,jdbcType=SMALLINT},
+      </if>
+      <if test="dstNodeId != null">
+        #{dstNodeId,jdbcType=BIGINT},
+      </if>
+      <if test="dstNodePort != null">
+        #{dstNodePort,jdbcType=SMALLINT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.alibaba.alink.server.domain.Edge">
+    <!--@mbg.generated-->
+    update edge
+    <set>
+      <if test="gmtCreate != null">
+        gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="experimentId != null">
+        experiment_id = #{experimentId,jdbcType=BIGINT},
+      </if>
+      <if test="srcNodeId != null">
+        src_node_id = #{srcNodeId,jdbcType=BIGINT},
+      </if>
+      <if test="srcNodePort != null">
+        src_node_port = #{srcNodePort,jdbcType=SMALLINT},
+      </if>
+      <if test="dstNodeId != null">
+        dst_node_id = #{dstNodeId,jdbcType=BIGINT},
+      </if>
+      <if test="dstNodePort != null">
+        dst_node_port = #{dstNodePort,jdbcType=SMALLINT},
+      </if>
+    </set>
+    where edge_id = #{edgeId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.alibaba.alink.server.domain.Edge">
+    <!--@mbg.generated-->
+    update edge
+    set gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+      gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      experiment_id = #{experimentId,jdbcType=BIGINT},
+      src_node_id = #{srcNodeId,jdbcType=BIGINT},
+      src_node_port = #{srcNodePort,jdbcType=SMALLINT},
+      dst_node_id = #{dstNodeId,jdbcType=BIGINT},
+      dst_node_port = #{dstNodePort,jdbcType=SMALLINT}
+    where edge_id = #{edgeId,jdbcType=BIGINT}
+  </update>
+
+<!--auto generated by MybatisCodeHelper on 2022-03-12-->
+  <delete id="deleteByEdgeIdAndExperimentId">
+        delete from edge
+        where edge_id=#{edgeId,jdbcType=BIGINT} and experiment_id=#{experimentId,jdbcType=BIGINT}
+    </delete>
+
+<!--auto generated by MybatisCodeHelper on 2022-03-12-->
+  <select id="selectByExperimentId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List"/>
+    from edge
+    where experiment_id=#{experimentId,jdbcType=BIGINT}
+  </select>
+</mapper>

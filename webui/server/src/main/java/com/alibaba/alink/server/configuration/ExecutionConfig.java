@@ -7,11 +7,21 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "alink.execution")
 public class ExecutionConfig {
 
+	private String type;
+
 	private String remoteClusterHost;
 
 	private String remoteClusterPort;
 
 	private Integer localParallelism = 1;
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
 
 	public String getRemoteClusterHost() {
 		return remoteClusterHost;

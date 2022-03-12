@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alibaba.alink.server.mapper.ExperimentMapper">
+  <resultMap id="BaseResultMap" type="com.alibaba.alink.server.domain.Experiment">
+    <!--@mbg.generated-->
+    <!--@Table experiment-->
+    <id column="experiment_id" jdbcType="BIGINT" property="experimentId" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+    <result column="config" jdbcType="VARCHAR" property="config" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    experiment_id, `name`, gmt_create, gmt_modified, config
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from experiment
+    where experiment_id = #{experimentId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    <!--@mbg.generated-->
+    delete from experiment
+    where experiment_id = #{experimentId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.alibaba.alink.server.domain.Experiment">
+    <!--@mbg.generated-->
+    insert into experiment (experiment_id, `name`, gmt_create, 
+      gmt_modified, config)
+    values (#{experimentId,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, #{gmtCreate,jdbcType=TIMESTAMP}, 
+      #{gmtModified,jdbcType=TIMESTAMP}, #{config,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.alibaba.alink.server.domain.Experiment">
+    <!--@mbg.generated-->
+    insert into experiment
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="experimentId != null">
+        experiment_id,
+      </if>
+      <if test="name != null">
+        `name`,
+      </if>
+      <if test="gmtCreate != null">
+        gmt_create,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+      <if test="config != null">
+        config,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="experimentId != null">
+        #{experimentId,jdbcType=BIGINT},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="gmtCreate != null">
+        #{gmtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="config != null">
+        #{config,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.alibaba.alink.server.domain.Experiment">
+    <!--@mbg.generated-->
+    update experiment
+    <set>
+      <if test="name != null">
+        `name` = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="gmtCreate != null">
+        gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="config != null">
+        config = #{config,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where experiment_id = #{experimentId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.alibaba.alink.server.domain.Experiment">
+    <!--@mbg.generated-->
+    update experiment
+    set `name` = #{name,jdbcType=VARCHAR},
+      gmt_create = #{gmtCreate,jdbcType=TIMESTAMP},
+      gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      config = #{config,jdbcType=VARCHAR}
+    where experiment_id = #{experimentId,jdbcType=BIGINT}
+  </update>
+</mapper>

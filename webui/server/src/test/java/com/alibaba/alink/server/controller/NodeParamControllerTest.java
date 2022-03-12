@@ -1,14 +1,5 @@
 package com.alibaba.alink.server.controller;
 
-import com.alibaba.alink.server.controller.NodeController.AddNodeRequest;
-import com.alibaba.alink.server.controller.NodeController.AddNodeResponse;
-import com.alibaba.alink.server.controller.NodeParamController.UpdateParamRequest;
-import com.alibaba.alink.server.domain.NodeType;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +7,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import com.alibaba.alink.server.controller.NodeController.AddNodeResponse;
+import com.alibaba.alink.server.controller.NodeController.NodeDTO;
+import com.alibaba.alink.server.controller.NodeParamController.UpdateNodeParamDTO;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,12 +42,13 @@ class NodeParamControllerTest {
 	protected MockMvc mvc;
 
 	Long addNode() throws Exception {
-		AddNodeRequest req = new NodeController.AddNodeRequest();
+		NodeDTO req = new NodeDTO();
+		req.experimentId = 1L;
 		req.nodeName = "shuffle";
 		req.positionX = 100.;
 		req.positionY = 200.;
 		req.className = "com.alibaba.alink.ShuffleBatchOp";
-		req.nodeType = NodeType.FUNCTION;
+		req.nodeType = NodeDTO.NodeType.FUNCTION;
 		MvcResult mvcResult = mvc.perform(post("/api/v1/node/add")
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.content(gson.toJson(req)))
@@ -62,6 +64,7 @@ class NodeParamControllerTest {
 	public void testGetEmtpyParams() throws Exception {
 		Long nodeId = addNode();
 		MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
+				.param("experiment_id", "1")
 				.param("node_id", String.valueOf(nodeId)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.success").value(true))
@@ -72,12 +75,13 @@ class NodeParamControllerTest {
 	@Test
 	public void testAddParams() throws Exception {
 		Long nodeId = addNode();
-		UpdateParamRequest request = new UpdateParamRequest();
+		UpdateNodeParamDTO request = new UpdateNodeParamDTO();
 
 		Map <String, String> toUpdate = new HashMap <>();
 		toUpdate.put("a", "123");
 		toUpdate.put("b", "456");
 
+		request.experimentId = 1L;
 		request.nodeId = nodeId;
 		request.paramsToUpdate = toUpdate;
 		request.paramsToDel = new HashSet <>();
@@ -89,6 +93,7 @@ class NodeParamControllerTest {
 			.andExpect(jsonPath("$.success").value(true));
 
 		MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
+				.param("experiment_id", "1")
 				.param("node_id", String.valueOf(nodeId)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.success").value(true))
@@ -100,13 +105,14 @@ class NodeParamControllerTest {
 	@Test
 	public void testDeleteParams() throws Exception {
 		Long nodeId = addNode();
-		UpdateParamRequest request = new UpdateParamRequest();
+		UpdateNodeParamDTO request = new UpdateNodeParamDTO();
 
 		{
 			Map <String, String> toUpdate = new HashMap <>();
 			toUpdate.put("a", "123");
 			toUpdate.put("b", "456");
 
+			request.experimentId = 1L;
 			request.nodeId = nodeId;
 			request.paramsToUpdate = toUpdate;
 			request.paramsToDel = new HashSet <>();
@@ -118,6 +124,7 @@ class NodeParamControllerTest {
 				.andExpect(jsonPath("$.success").value(true));
 
 			MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
+					.param("experiment_id", "1")
 					.param("node_id", String.valueOf(nodeId)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.success").value(true))
@@ -132,6 +139,7 @@ class NodeParamControllerTest {
 			toDelete.add("a");
 			toDelete.add("b");
 
+			request.experimentId = 1L;
 			request.nodeId = nodeId;
 			request.paramsToUpdate = toUpdate;
 			request.paramsToDel = toDelete;
@@ -143,6 +151,7 @@ class NodeParamControllerTest {
 				.andExpect(jsonPath("$.success").value(true));
 
 			MvcResult mvcResult = mvc.perform(get("/api/v1/param/get")
+					.param("experiment_id", "1")
 					.param("node_id", String.valueOf(nodeId)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.success").value(true))

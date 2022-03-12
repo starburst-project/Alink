@@ -1,6 +1,4 @@
-package com.alibaba.alink.server.service.impl;
-
-import org.apache.flink.ml.api.misc.param.Params;
+package com.alibaba.alink.server.service.execution;
 
 import com.alibaba.alink.common.MLEnvironment;
 import com.alibaba.alink.common.MLEnvironmentFactory;
@@ -13,18 +11,11 @@ import com.alibaba.alink.server.common.OpUtils;
 import com.alibaba.alink.server.domain.Edge;
 import com.alibaba.alink.server.domain.Node;
 import com.alibaba.alink.server.domain.NodeParam;
-import com.alibaba.alink.server.service.ExecutionService;
+import com.alibaba.alink.server.service.api.execution.ExecutionService;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
+import org.apache.flink.ml.api.misc.param.Params;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +38,7 @@ public abstract class EnvExecutionServiceImpl implements ExecutionService {
 			nodeParamMap.get(nodeId).add(nodeParam);
 		}
 
-		nodes.sort(Comparator.comparing(Node::getId));
+		nodes.sort(Comparator.comparing(Node::getNodeId));
 		List <LinkedList <Tuple2 <Integer, Integer>>> inAdj = new ArrayList <>();
 		List <LinkedList <Integer>> outAdj = new ArrayList <>();
 		int v = nodes.size();
@@ -61,11 +52,14 @@ public abstract class EnvExecutionServiceImpl implements ExecutionService {
 
 		int[] inDegree = new int[v];
 		for (Edge edge : edges) {
+			Node node = new Node();
+			node.setNodeId(edge.getSrcNodeId());
 			int src = Collections.binarySearch(
-				nodes, new Node().setId(edge.getSrcNodeId()), Comparator.comparing(Node::getId)
+				nodes, node, Comparator.comparing(Node::getNodeId)
 			);
+			node.setNodeId(edge.getDstNodeId());
 			int dst = Collections.binarySearch(
-				nodes, new Node().setId(edge.getDstNodeId()), Comparator.comparing(Node::getId)
+				nodes, node, Comparator.comparing(Node::getNodeId)
 			);
 			inAdj.get(dst).add(new Tuple2 <>(src, edge.getDstNodePort().intValue()));
 			outAdj.get(src).add(dst);
@@ -109,7 +103,7 @@ public abstract class EnvExecutionServiceImpl implements ExecutionService {
 			int nodeId = order[i];
 			Node node = nodes.get(nodeId);
 			Map <String, String> paramMap = new HashMap <>();
-			for (NodeParam nodeParam : nodeParamMap.get(node.getId())) {
+			for (NodeParam nodeParam : nodeParamMap.get(node.getNodeId())) {
 				paramMap.put(nodeParam.getKey(), nodeParam.getValue());
 			}
 			paramMap.put(HasMLEnvironmentId.ML_ENVIRONMENT_ID.getName(), String.valueOf(mlEnvId));

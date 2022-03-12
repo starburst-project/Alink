@@ -1,16 +1,18 @@
 package com.alibaba.alink.server.service.impl;
 
-import com.alibaba.alink.server.domain.Edge;
-import com.alibaba.alink.server.domain.Node;
-import com.alibaba.alink.server.domain.NodeParam;
-import com.alibaba.alink.server.service.ExecutionService;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.alibaba.alink.server.domain.Edge;
+import com.alibaba.alink.server.domain.Node;
+import com.alibaba.alink.server.domain.NodeParam;
+import com.alibaba.alink.server.service.api.execution.ExecutionService;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.Arrays;
@@ -25,19 +27,30 @@ class EmbedExecutionServiceImplTest {
 	ExecutionService executionService;
 
 	Node makeNode(Long id, String className) {
-		return new Node().setId(id).setClassName(className);
+		Node node = new Node();
+		node.setNodeId(id);
+		node.setClassName(className);
+		return node;
 	}
 
 	Edge makeEdge(Long srcNodeId, Short srcNodePort, Long dstNodeId, Short dstNodePort) {
-		return new Edge()
-			.setSrcNodeId(srcNodeId).setSrcNodePort(srcNodePort)
-			.setDstNodeId(dstNodeId).setDstNodePort(dstNodePort);
+		Edge edge = new Edge();
+		edge.setSrcNodeId(srcNodeId);
+		edge.setSrcNodePort(srcNodePort);
+		edge.setDstNodeId(dstNodeId);
+		edge.setDstNodePort(dstNodePort);
+
+		return edge;
 	}
 
 	NodeParam makeNodeParam(Long nodeId, String key, String value) {
-		return new NodeParam().setNodeId(nodeId)
-			.setKey(key)
-			.setValue(value);
+		NodeParam nodeParam = new NodeParam();
+
+		nodeParam.setNodeId(nodeId);
+		nodeParam.setKey(key);
+		nodeParam.setValue(value);
+
+		return nodeParam;
 	}
 
 	@Test
