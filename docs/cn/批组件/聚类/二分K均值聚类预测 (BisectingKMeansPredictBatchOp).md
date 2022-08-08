@@ -5,18 +5,17 @@ Python 类名：BisectingKMeansPredictBatchOp
 
 
 ## 功能介绍
-二分k均值算法是k-means聚类算法的一个变体，主要是为了改进k-means算法随机选择初始质心的随机性造成聚类结果不确定性的问题.
-
-Alink上算法包括二分K均值聚类训练，二分K均值聚类预测, 二分K均值聚类流式预测。
+二分k均值算法（BisectingKmeansTrainBatchOp）对应的预测组件，基于训练好的二分k均值模型进行聚类预测。
 
 ## 参数说明
 #### 训练
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 ## 代码示例
@@ -38,28 +37,22 @@ df = pd.DataFrame([
 ])
 
 inBatch = BatchOperator.fromDataframe(df, schemaStr='id int, vec string')
-
 inStream = StreamOperator.fromDataframe(df, schemaStr='id int, vec string')
 
 kmeansTrain = BisectingKMeansTrainBatchOp()\
     .setVectorCol("vec")\
-    .setK(2)
-    
-predictBatch = BisectingKMeansPredictBatchOp()\
-    .setPredictionCol("pred")
-    
-kmeansTrain.linkFrom(inBatch)
-
-predictBatch.linkFrom(kmeansTrain, inBatch)
-
+    .setK(2)\
+    .linkFrom(inBatch)
 kmeansTrain.lazyPrint(10)
+
+predictBatch = BisectingKMeansPredictBatchOp()\
+    .setPredictionCol("pred")\
+    .linkFrom(kmeansTrain, inBatch)
 predictBatch.print()
 
 predictStream = BisectingKMeansPredictStreamOp(kmeansTrain)\
-    .setPredictionCol("pred")
-    
-predictStream.linkFrom(inStream)
-
+    .setPredictionCol("pred")\
+    .linkFrom(inStream)
 predictStream.print()
 
 StreamOperator.execute()
@@ -95,16 +88,18 @@ public class BisectingKMeansPredictBatchOpTest {
 		StreamOperator <?> inStream = new MemSourceStreamOp(df, "id int, vec string");
 		BatchOperator <?> kmeansTrain = new BisectingKMeansTrainBatchOp()
 			.setVectorCol("vec")
-			.setK(2);
-		BatchOperator <?> predictBatch = new BisectingKMeansPredictBatchOp()
-			.setPredictionCol("pred");
-		kmeansTrain.linkFrom(inBatch);
-		predictBatch.linkFrom(kmeansTrain, inBatch);
+			.setK(2)
+            .linkFrom(inBatch);
 		kmeansTrain.lazyPrint(10);
+
+		BatchOperator <?> predictBatch = new BisectingKMeansPredictBatchOp()
+			.setPredictionCol("pred")
+		    .linkFrom(kmeansTrain, inBatch);
 		predictBatch.print();
+
 		StreamOperator <?> predictStream = new BisectingKMeansPredictStreamOp(kmeansTrain)
-			.setPredictionCol("pred");
-		predictStream.linkFrom(inStream);
+			.setPredictionCol("pred")
+            .linkFrom(inStream);
 		predictStream.print();
 		StreamOperator.execute();
 	}
@@ -129,7 +124,3 @@ id|vec|pred
 3|9 9 9|1
 4|9.1 9.1 9.1|1
 5|9.2 9.2 9.2|1
-
-
-
-

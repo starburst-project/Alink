@@ -37,14 +37,14 @@ public class ArimaStreamOpTest extends AlinkTestBase {
 		CollectSinkStreamOp resultOp =
 			source.link(
 					new OverCountWindowStreamOp()
-						.setPartitionCols("id")
+						.setGroupCols("id")
 						.setTimeCol("ts")
 						.setPrecedingRows(5)
 						.setClause("mtable_agg_preceding(ts, val) as data")
 				).link(
 					new ArimaStreamOp()
 						.setValueCol("data")
-						.setOrder(new int[] {1, 0, 1})
+						.setOrder(1, 0, 1)
 						.setPredictNum(12)
 						.setPredictionCol("predict")
 				).link(

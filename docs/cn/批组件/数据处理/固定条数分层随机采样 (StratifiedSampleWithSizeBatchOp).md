@@ -5,17 +5,16 @@ Python 类名：StratifiedSampleWithSizeBatchOp
 
 
 ## 功能介绍
-
-本算子对输入数据的每个类别进行指定个数的分层随机抽样。
+固定条数分层随机采样组件。给定输入数据，本算法根据用户指定的不同类别的采样个数进行随机采样。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| strataCol | 分层列 | 分层列 | String | ✓ |  |
-| strataSizes | 采样个数 | 采样个数, eg, a:10,b:30 | String | ✓ |  |
-| strataSize | 采样个数 | 采样个数 | Integer |  | -1 |
-| withReplacement | 是否放回 | 是否有放回的采样，默认不放回 | Boolean |  | false |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| strataCol | 分层列 | 分层列 | String | ✓ |  |  |
+| strataSizes | 采样个数 | 采样个数, eg, a:10,b:30 | String | ✓ |  |  |
+| strataSize | 采样个数 | 采样个数 | Integer |  |  | -1 |
+| withReplacement | 是否放回 | 是否有放回的采样，默认不放回 | Boolean |  |  | false |
 
 
 ## 代码示例

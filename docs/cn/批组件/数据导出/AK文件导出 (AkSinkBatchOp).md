@@ -9,11 +9,12 @@ Python 类名：AkSinkBatchOp
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| filePath | 文件路径 | 文件路径 | String | ✓ |  |
-| numFiles | 文件数目 | 文件数目 | Integer |  | 1 |
-| overwriteSink | 是否覆写已有数据 | 是否覆写已有数据 | Boolean |  | false |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| filePath | 文件路径 | 文件路径 | String | ✓ |  |  |
+| numFiles | 文件数目 | 文件数目 | Integer |  |  | 1 |
+| overwriteSink | 是否覆写已有数据 | 是否覆写已有数据 | Boolean |  |  | false |
+| partitionCols | 分区列 | 创建分区使用的列名 | String[] |  |  | null |
 
 ## 代码示例
 

@@ -12,6 +12,7 @@ import com.alibaba.alink.operator.batch.utils.ModelMapBatchOp;
 import com.alibaba.alink.operator.stream.StreamOperator;
 import com.alibaba.alink.operator.stream.utils.ModelMapStreamOp;
 import com.alibaba.alink.params.ModelStreamScanParams;
+import com.alibaba.alink.params.io.ModelFileSinkParams;
 
 import java.util.List;
 
@@ -57,8 +58,8 @@ public abstract class MapModel<T extends MapModel <T>>
 
 	@Override
 	public LocalPredictor collectLocalPredictor(TableSchema inputSchema) throws Exception {
-		List <Row> modelRows = this.modelData.collect();
-		ModelMapper mapper = mapperBuilder.apply(modelData.getSchema(), inputSchema, this.getParams());
+		List <Row> modelRows = getModelData().collect();
+		ModelMapper mapper = mapperBuilder.apply(getModelData().getSchema(), inputSchema, this.getParams());
 		mapper.loadModel(modelRows);
 		return new LocalPredictor(mapper);
 	}

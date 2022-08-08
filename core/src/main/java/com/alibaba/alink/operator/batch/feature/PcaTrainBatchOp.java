@@ -8,6 +8,16 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
+import com.alibaba.alink.common.exceptions.AkIllegalStateException;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.lazy.WithModelInfoBatchOp;
 import com.alibaba.alink.common.linalg.DenseMatrix;
 import com.alibaba.alink.common.linalg.DenseVector;
@@ -31,6 +41,11 @@ import java.util.List;
  * PcaTrainBatchOp is train a model which can be used to batch predict and stream predict
  * The calculation is done using eigen on the correlation or covariance matrix.
  */
+@InputPorts(values = {@PortSpec(PortType.DATA)})
+@OutputPorts(values = {@PortSpec(value = PortType.MODEL)})
+@ParamSelectColumnSpec(name = "selectedCols", allowedTypeCollections = TypeCollections.VECTOR_TYPES)
+@ParamSelectColumnSpec(name = "vectorCol", allowedTypeCollections = TypeCollections.VECTOR_TYPES)
+@NameCn("主成分分析训练")
 public final class PcaTrainBatchOp extends BatchOperator <PcaTrainBatchOp>
 	implements PcaTrainParams <PcaTrainBatchOp>,
 	WithModelInfoBatchOp <PcaModelData, PcaTrainBatchOp, PcaModelInfoBatchOp> {
@@ -365,7 +380,8 @@ public final class PcaTrainBatchOp extends BatchOperator <PcaTrainBatchOp>
 					corr = getCov(counts, sums, dotProduct, nx);
 					break;
 				default:
-					throw new IllegalArgumentException("pca type not supported yet!");
+					throw new AkUnsupportedOperationException(
+						String.format("pca type [%s] not supported yet!", pcaType));
 			}
 
 			DenseMatrix calculateMatrix = new DenseMatrix(corr);
@@ -381,13 +397,13 @@ public final class PcaTrainBatchOp extends BatchOperator <PcaTrainBatchOp>
 			}
 
 			if (p >= calculateMatrix.numCols()) {
-				throw new RuntimeException(
+				throw new AkIllegalOperatorParameterException(
 					"k is larger than vector size. k: " + p + " vectorSize: " + calculateMatrix.numCols());
 			}
 
 			scala.Tuple2 <DenseVector, DenseMatrix> eigValueAndVector = solve(calculateMatrix, p);
 			if (eigValueAndVector._1.size() < p) {
-				throw new RuntimeException("Fail to converge when solving eig value problem.");
+				throw new AkIllegalStateException("Fail to converge when solving eig value problem.");
 			}
 
 			//set model

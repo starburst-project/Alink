@@ -6,17 +6,23 @@ Python 类名：DCTBatchOp
 
 ## 功能介绍
 
-对数据进行离散余弦变换。
+DCT(Discrete Cosine Transform), 又叫做离散余弦变换，是对数据进行离散余弦变换，可以用来做视频编码，图像压缩等，经过变换后数据会有更好的聚集性。
+输入是vector列，vector的size为n, 那经过变换后的输出变成size为n的vector。
+
+### 算法原理
+DCT变换就是输入信号为实偶函数的DFT变换
+
+<div align=center><img src="https://img.alicdn.com/imgextra/i3/O1CN014yvQGX224jkzJkYQF_!!6000000007067-2-tps-1082-326.png" height="100%" width="100%"></div>
 
 
 ## 参数说明
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ |  |
-| inverse | 是否为逆变换 | 是否为逆变换，false表示正变换，true表示逆变换。默认正变换。 | Boolean |  | false |
-| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  | null |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ |  |  |
+| inverse | 是否为逆变换 | 是否为逆变换，false表示正变换，true表示逆变换。默认正变换。 | Boolean |  |  | false |
+| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  |  | null |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 

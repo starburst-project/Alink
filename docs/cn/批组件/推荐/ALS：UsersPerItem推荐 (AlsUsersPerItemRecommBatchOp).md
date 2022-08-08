@@ -5,19 +5,19 @@ Python 类名：AlsUsersPerItemRecommBatchOp
 
 
 ## 功能介绍
-使用ALS (Alternating Lease Square）model 为item 推荐users。
+使用ALS (Alternating Lease Square）model 为item 推荐users。这里的ALS模型可以是隐式模型，也可以是显式模型，输出格式是MTable。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| itemCol | Item列列名 | Item列列名 | String | ✓ |  |
-| recommCol | 推荐结果列名 | 推荐结果列名 | String | ✓ |  |
-| excludeKnown | 排除已知的关联 | 推荐结果中是否排除训练数据中已知的关联 | Boolean |  | false |
-| initRecommCol | 初始推荐列列名 | 初始推荐列列名 | String |  | null |
-| k | 推荐TOP数量 | 推荐TOP数量 | Integer |  | 10 |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| itemCol | Item列列名 | Item列列名 | String | ✓ |  |  |
+| recommCol | 推荐结果列名 | 推荐结果列名 | String | ✓ |  |  |
+| excludeKnown | 排除已知的关联 | 推荐结果中是否排除训练数据中已知的关联 | Boolean |  |  | false |
+| initRecommCol | 初始推荐列列名 | 初始推荐列列名 | String |  | 所选列类型为 [M_TABLE] | null |
+| k | 推荐TOP数量 | 推荐TOP数量 | Integer |  |  | 10 |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 ## 代码示例

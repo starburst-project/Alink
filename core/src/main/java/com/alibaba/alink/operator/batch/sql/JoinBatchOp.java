@@ -2,6 +2,12 @@ package com.alibaba.alink.operator.batch.sql;
 
 import org.apache.flink.ml.api.misc.param.Params;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.common.sql.BatchSqlOperators;
 import com.alibaba.alink.params.sql.JoinParams;
@@ -9,6 +15,9 @@ import com.alibaba.alink.params.sql.JoinParams;
 /**
  * Join two batch operators.
  */
+@InputPorts(values = {@PortSpec(PortType.DATA), @PortSpec(PortType.DATA)})
+@OutputPorts(values = @PortSpec(PortType.DATA))
+@NameCn("SQL操作：Join")
 public final class JoinBatchOp extends BaseSqlApiBatchOp <JoinBatchOp>
 	implements JoinParams <JoinBatchOp> {
 
@@ -55,7 +64,7 @@ public final class JoinBatchOp extends BaseSqlApiBatchOp <JoinBatchOp>
 				outputOp = BatchSqlOperators.fullOuterJoin(inputs[0], inputs[1], joidPredicate, selectClause);
 				break;
 			default:
-				throw new RuntimeException("Not supported binary op");
+				throw new AkUnsupportedOperationException("Not supported binary op: " + getType());
 		}
 		this.setOutputTable(outputOp.getOutputTable());
 		return this;

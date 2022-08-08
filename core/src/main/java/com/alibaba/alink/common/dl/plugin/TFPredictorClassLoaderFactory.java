@@ -1,20 +1,16 @@
 package com.alibaba.alink.common.dl.plugin;
 
-import org.apache.flink.api.java.tuple.Tuple2;
-
+import com.alibaba.alink.common.exceptions.AkPluginErrorException;
 import com.alibaba.alink.common.io.plugin.ClassLoaderContainer;
 import com.alibaba.alink.common.io.plugin.ClassLoaderFactory;
-import com.alibaba.alink.common.io.plugin.PluginDistributeCache;
 import com.alibaba.alink.common.io.plugin.OsType;
 import com.alibaba.alink.common.io.plugin.OsUtils;
-import com.alibaba.alink.common.io.plugin.PluginDescriptor;
+import com.alibaba.alink.common.io.plugin.PluginDistributeCache;
 import com.alibaba.alink.common.io.plugin.RegisterKey;
 import com.alibaba.alink.common.io.plugin.TemporaryClassLoaderContext;
 
 import java.util.Iterator;
 import java.util.ServiceLoader;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 public class TFPredictorClassLoaderFactory extends ClassLoaderFactory {
 
@@ -44,7 +40,7 @@ public class TFPredictorClassLoaderFactory extends ClassLoaderFactory {
 			if (iter.hasNext()) {
 				return iter.next();
 			} else {
-				throw new RuntimeException("Could not find the service in the classloader.");
+				throw new AkPluginErrorException("Could not find the service in the classloader.");
 			}
 		}
 	}
@@ -60,24 +56,4 @@ public class TFPredictorClassLoaderFactory extends ClassLoaderFactory {
 		);
 	}
 
-	private static class DLPredictorServiceFilter implements Predicate <DLPredictorService> {
-		private final RegisterKey registerKey;
-
-		public DLPredictorServiceFilter(RegisterKey registerKey) {
-			this.registerKey = registerKey;
-		}
-
-		@Override
-		public boolean test(DLPredictorService service) {
-			return true;
-		}
-	}
-
-	private static class DLPredictorVersionGetter
-		implements Function <Tuple2 <DLPredictorService, PluginDescriptor>, String> {
-		@Override
-		public String apply(Tuple2 <DLPredictorService, PluginDescriptor> service) {
-			return service.f1.getVersion();
-		}
-	}
 }

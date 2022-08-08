@@ -10,6 +10,8 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.ml.api.misc.param.Params;
 
 import com.alibaba.alink.common.io.annotations.FSAnnotation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +41,6 @@ public class HttpFileReadOnlyFileSystem extends BaseFileSystem <HttpFileReadOnly
 	}
 
 	static class HttpFileSystemImpl extends FileSystem {
-
 		private final Path base;
 
 		public HttpFileSystemImpl(Path base) {
@@ -178,17 +179,24 @@ public class HttpFileReadOnlyFileSystem extends BaseFileSystem <HttpFileReadOnly
 		}
 	}
 
+	private static final Logger LOG = LoggerFactory.getLogger(HttpFileReadOnlyFileSystem.class);
+
 	static long doGetLen(Path path) {
 		HttpURLConnection headerConnection = null;
 		try {
+
 			headerConnection = (HttpURLConnection) path.toUri().toURL().openConnection();
 			headerConnection.setConnectTimeout(5000);
 			headerConnection.setRequestMethod("HEAD");
 
 			headerConnection.connect();
+
 			long contentLength = headerConnection.getContentLengthLong();
+
 			String acceptRanges = headerConnection.getHeaderField("Accept-Ranges");
 			boolean splittable = acceptRanges != null && acceptRanges.equalsIgnoreCase("bytes");
+
+			LOG.info("contentLength of {}, acceptRanges of {} to download {}", contentLength, acceptRanges, path);
 
 			if (contentLength < 0) {
 				throw new RuntimeException("The content length can't be determined.");
@@ -269,13 +277,16 @@ public class HttpFileReadOnlyFileSystem extends BaseFileSystem <HttpFileReadOnly
 		}
 
 		private void createInternal(long start, long end) throws IOException {
+			if(start>=end){
+				throw new IllegalArgumentException("start position of http file is is lager than end position");
+			}
 			connection = (HttpURLConnection) path.toUri().toURL().openConnection();
 
 			connection.setDoInput(true);
 			connection.setConnectTimeout(CONNECTION_TIMEOUT);
 			connection.setReadTimeout(READ_TIMEOUT);
 			connection.setRequestMethod("GET");
-			connection.setRequestProperty("Range", String.format("bytes=%d-%d", start, end));
+			connection.setRequestProperty("Range", String.format("bytes=%d-%d", start, end-1));
 			connection.connect();
 
 			internal = connection.getInputStream();
@@ -298,6 +309,12 @@ public class HttpFileReadOnlyFileSystem extends BaseFileSystem <HttpFileReadOnly
 			super.close();
 
 			closeInternal();
+		}
+
+		@Override
+		public synchronized void reset() throws IOException {
+			close();
+			createInternal(0, fileLen);
 		}
 	}
 }

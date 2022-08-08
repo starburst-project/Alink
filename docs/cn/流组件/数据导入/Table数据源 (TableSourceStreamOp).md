@@ -9,20 +9,17 @@ Python 类名：TableSourceStreamOp
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
 
 
 
 ## 代码示例
+
+** 以下代码仅用于示意，可能需要修改部分代码或者配置环境后才能正常运行！**
+
 ### Python 代码
 ```python
-from pyalink.alink import *
-
-import pandas as pd
-
-useLocalEnv(1)
-
 df_data = pd.DataFrame([
     [0, "0 0 0"],
     [1, "1 1 1"],

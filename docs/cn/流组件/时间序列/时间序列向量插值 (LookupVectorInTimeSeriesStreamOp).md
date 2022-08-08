@@ -9,13 +9,13 @@ Python 类名：LookupVectorInTimeSeriesStreamOp
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| outputCol | 输出结果列列名 | 输出结果列列名，必选 | String | ✓ |  |
-| timeCol | 时间戳列(TimeStamp) | 时间戳列(TimeStamp) | String | ✓ |  |
-| timeSeriesCol | 时间序列列 | 时间序列列，是特殊的MTable类型，一列是时间，一列是值 | String | ✓ |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| outputCol | 输出结果列列名 | 输出结果列列名，必选 | String | ✓ |  |  |
+| timeCol | 时间戳列(TimeStamp) | 时间戳列(TimeStamp) | String | ✓ | 所选列类型为 [TIMESTAMP] |  |
+| timeSeriesCol | 时间序列列 | 时间序列列，是特殊的MTable类型，一列是时间，一列是值 | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码
@@ -47,7 +47,7 @@ source = dataframeToOperator(data, schemaStr='id int, ts timestamp, val string',
 
 source.link(
 			OverCountWindowStreamOp()
-				.setPartitionCols(["id"])
+				.setGroupCols(["id"])
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg_preceding(ts, val) as data")
@@ -127,6 +127,15 @@ public class LookupVectorInTimeSeriesStreamOpTest {
 ```
 
 ### 运行结果
-id|ts|data|out
----|---|----|---
-1|1970-01-01 08:00:00.005|{"data":{"ts":["1970-01-01 08:00:00.001","1970-01-01 08:00:00.002","1970-01-01 08:00:00.003","1970-01-01 08:00:00.004","1970-01-01 08:00:00.005","1970-01-01 08:00:00.006","1970-01-01 08:00:00.007","1970-01-01 08:00:00.008","1970-01-01 08:00:00.009","1970-01-01 08:00:00.01"],"val":["10.0 21.0","11.0 22.0","12.0 23.0","13.0 24.0","14.0 25.0","15.0 26.0","16.0 27.0","17.0 28.0","18.0 29.0","19.0 30.0"]},"schema":"ts TIMESTAMP,val VARCHAR"}|null
+ts|out
+---|---
+1970-01-01 08:00:00.001|null
+1970-01-01 08:00:00.003|10.0 21.0
+1970-01-01 08:00:00.002|10.0 21.0
+1970-01-01 08:00:00.005|10.0 21.0
+1970-01-01 08:00:00.004|10.0 21.0
+1970-01-01 08:00:00.007|11.0 22.0
+1970-01-01 08:00:00.006|10.0 21.0
+1970-01-01 08:00:00.009|13.0 24.0
+1970-01-01 08:00:00.008|12.0 23.0
+1970-01-01 08:00:00.01|14.0 25.0

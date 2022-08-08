@@ -8,14 +8,18 @@ Python 类名：VectorStandardScalerPredictBatchOp
 
 标准化是对向量数据进行按正态化处理的组件
 
-加载VectorStandardScalerTrainBatchOp中生成的模型，对向量数据做标准化预处理。
+VectorStandardScalerTrainBatchOp 计算向量的每一列的均值和方差，组件可以指定默认均值为0，标准差为1。
+生成向量标准化的模型，在 VectorStandardScalerPredictBatchOp 中加载，对数据做标准化处理。
+
+输入的向量可以同时包含稀疏向量和稠密向量，向量维度也可以不相同。输入稠密向量维度不够时，没有的维度默认为0。
 
 ## 参数说明 
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 ## 代码示例

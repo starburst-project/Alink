@@ -10,6 +10,7 @@ import com.alibaba.alink.common.MTable;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.linalg.tensor.FloatTensor;
 import com.alibaba.alink.common.mapper.Mapper;
+import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.dataproc.ToMTableBatchOp;
 import com.alibaba.alink.operator.batch.source.MemSourceBatchOp;
@@ -50,8 +51,7 @@ public class ToMTableMapperTest extends AlinkTestBase {
 				.set(ToMTableParams.SELECTED_COL, "mTable")
 		);
 
-		String mTableStr = mTable.toString();
-		MTable result = (MTable) mapper.map(Row.of(mTableStr)).getField(0);
+		MTable result = (MTable) mapper.map(Row.of(JsonConverter.toJson(mTable))).getField(0);
 		Assert.assertEquals(mTable.toString(), result.toString());
 		System.out.println(mTable.toString());
 	}
@@ -78,7 +78,7 @@ public class ToMTableMapperTest extends AlinkTestBase {
 		final String mTableStr = "{\"data\":{\"col0\":[1],\"col1\":[\"2\"],\"label\":[0],\"ts\":[\"2603-10-12 04:13:52"
 			+ ".012\"],\"d_vec\":[null],\"s_vec\":[\"$3$1:2.0\"],\"tensor\":[\"FLOAT#1#3.0 \"]},\"schema\":\"col0 INT,"
 			+ "col1 VARCHAR,label INT,ts TIMESTAMP,d_vec DENSE_VECTOR,s_vec VECTOR,tensor FLOAT_TENSOR\"}";
-		final MTable expect = new MTable(mTableStr);
+		final MTable expect = MTable.fromJson(mTableStr);
 
 		Row[] rows = new Row[] {
 			Row.of(mTableStr)

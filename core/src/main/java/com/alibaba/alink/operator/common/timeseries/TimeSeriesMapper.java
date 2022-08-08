@@ -10,8 +10,8 @@ import org.apache.flink.types.Row;
 
 import com.alibaba.alink.common.AlinkGlobalConfiguration;
 import com.alibaba.alink.common.MTable;
-import com.alibaba.alink.common.MTableTypes;
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
 import com.alibaba.alink.common.linalg.Vector;
 import com.alibaba.alink.common.linalg.VectorUtil;
 import com.alibaba.alink.common.mapper.Mapper;
@@ -71,8 +71,8 @@ public abstract class TimeSeriesMapper extends Mapper {
 		TypeInformation valColType =
 			TableUtil.findColType(dataSchema, params.get(TimeSeriesPredictParams.VALUE_COL));
 
-		if (!valColType.equals(MTableTypes.M_TABLE) && valColType != Types.STRING) {
-			throw new RuntimeException("valCol must be mtable type.");
+		if (!valColType.equals(AlinkTypes.M_TABLE) && valColType != Types.STRING) {
+			throw new AkIllegalDataException("valCol must be mtable or string.");
 		}
 
 		return prepareTimeSeriesIoSchema(params);
@@ -82,7 +82,7 @@ public abstract class TimeSeriesMapper extends Mapper {
 		ArrayList <String> resultCols = new ArrayList <>();
 		ArrayList <TypeInformation <?>> resultTypes = new ArrayList <>();
 		resultCols.add(params.get(TimeSeriesPredictParams.PREDICTION_COL));
-		resultTypes.add(MTableTypes.M_TABLE);
+		resultTypes.add(AlinkTypes.M_TABLE);
 		if (params.contains(TimeSeriesPredictParams.PREDICTION_DETAIL_COL)) {
 			resultCols.add(params.get(TimeSeriesPredictParams.PREDICTION_DETAIL_COL));
 			resultTypes.add(Types.STRING);
@@ -120,7 +120,7 @@ public abstract class TimeSeriesMapper extends Mapper {
 					result.set(1, t2.f1);
 				}
 			} else if (obj instanceof String) {
-				MTable a = new MTable((String) obj);
+				MTable a = MTable.fromJson((String) obj);
 				Tuple2 <MTable, String> t2 = predictor.apply(a, this.predictNum);
 				result.set(0, t2.f0);
 				if (withPredDetail) {
@@ -156,7 +156,7 @@ public abstract class TimeSeriesMapper extends Mapper {
 
 		@Override
 		public Tuple2 <MTable, String> apply(MTable historyTS, Integer predictNum) {
-			TableSchema schema = historyTS.getTableSchema();
+			TableSchema schema = historyTS.getSchema();
 
 			String timeCol = null;
 
@@ -270,7 +270,7 @@ public abstract class TimeSeriesMapper extends Mapper {
 					new MTable(
 						rows,
 						new String[] {timeCol, schema.getFieldNames()[valueIdx]},
-						new TypeInformation <?>[] {Types.SQL_TIMESTAMP, VectorTypes.VECTOR}
+						new TypeInformation <?>[] {Types.SQL_TIMESTAMP, AlinkTypes.VECTOR}
 					),
 					predictResult.f1
 				);

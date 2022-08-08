@@ -7,23 +7,41 @@ Python 类名：AlsTrainBatchOp
 ## 功能介绍
 ALS (Alternating Lease Square）交替最小二乘法是一种model based的协同过滤算法，
 用于对评分矩阵进行因子分解，然后预测user对item的评分。
+它通过观察到的所有用户给产品的打分，来推断每个用户的喜好并向用户推荐适合的产品。
 
-参考文献：
+### 算法原理
+推荐所使用的数据可以抽象成一个[m,n]的矩阵R，R的每一行代表m个用户对所有电影的评分，
+n列代表每部电影对应的得分。R是个稀疏矩阵，一个用户只是对所有电影中的一小部分看过，
+有评分。通过矩阵分解方法，我可以把这个低秩的矩阵，分解成两个小矩阵的点乘。公式如下：
+
+![](https://img.alicdn.com/imgextra/i4/O1CN01NTXnik1tjCCAaUWCX_!!6000000005937-2-tps-309-61.png)
+
+有了这个矩阵分解公式，我们可以定义代价函数：
+![](https://img.alicdn.com/imgextra/i2/O1CN01we0d5921JYxBSXWGk_!!6000000006964-2-tps-560-92.png)
+
+其中：$\lambda$ 为正则项系数。我们需要找出代价函数最小的U和V。常规的梯度下降算法不能求解。但是先固定U求V，再固定V求U，
+如此迭代下去，问题就可以解决了。
+### 算法使用
+ALS算法支持输出item或者user的隐向量，我们可以计算出用户或者物品的相似度，继而进行排序得到用户或者item的top
+N相似user或者item。这样在数据进行召回时便可以进行召回了。 比如根据用户用行为的物品召回，当用户浏览了若干了item时，
+便将这些item相似的item加入到召回池中，进行排序。
+
+### 参考文献：
 1. explicit feedback: Large-scale Parallel Collaborative Filtering for the Netflix Prize, 2007
-
+    
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| itemCol | Item列列名 | Item列列名 | String | ✓ |  |
-| rateCol | 打分列列名 | 打分列列名 | String | ✓ |  |
-| userCol | User列列名 | User列列名 | String | ✓ |  |
-| rank | 因子数 | 因子数 | Integer |  | 10 |
-| lambda | 正则化系数 | 正则化系数 | Double |  | 0.1 |
-| nonnegative | 是否约束因子非负 | 是否约束因子非负 | Boolean |  | false |
-| numBlocks | 分块数目 | 分块数目 | Integer |  | 1 |
-| numIter | 迭代次数 | 迭代次数，默认为10 | Integer |  | 10 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| itemCol | Item列列名 | Item列列名 | String | ✓ |  |  |
+| rateCol | 打分列列名 | 打分列列名 | String | ✓ | 所选列类型为 [BIGDECIMAL, BIGINTEGER, BYTE, DOUBLE, FLOAT, INTEGER, LONG, SHORT] |  |
+| userCol | User列列名 | User列列名 | String | ✓ |  |  |
+| lambda | 正则化系数 | 正则化系数 | Double |  |  | 0.1 |
+| nonnegative | 是否约束因子非负 | 是否约束因子非负 | Boolean |  |  | false |
+| numBlocks | 分块数目 | 分块数目 | Integer |  |  | 1 |
+| numIter | 迭代次数 | 迭代次数，默认为10 | Integer |  |  | 10 |
+| rank | 因子数 | 因子数 | Integer |  |  | 10 |
 
 
 

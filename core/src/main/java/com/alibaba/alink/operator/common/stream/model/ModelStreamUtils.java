@@ -18,13 +18,13 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.Preconditions;
 import org.apache.flink.util.StringUtils;
 
+import com.alibaba.alink.common.exceptions.AkIllegalModelException;
 import com.alibaba.alink.common.io.filesystem.AkUtils;
 import com.alibaba.alink.common.io.filesystem.AkUtils.AkMeta;
 import com.alibaba.alink.common.io.filesystem.BaseFileSystem;
 import com.alibaba.alink.common.io.filesystem.FilePath;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.common.utils.TableUtil;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
 import com.alibaba.alink.operator.common.io.types.FlinkTypeConverter;
 import com.alibaba.alink.params.ModelStreamScanParams;
 import org.apache.commons.io.IOUtils;
@@ -133,7 +133,7 @@ public class ModelStreamUtils {
 	}
 
 	public static Tuple2 <TableSchema, List <Row>> readModelRows(FilePath filePath, Timestamp modelId)
-		throws IOException {
+		throws Exception {
 		Tuple3 <Timestamp, Long, FilePath> modelDesc = ModelStreamUtils.descModel(filePath, modelId);
 
 		return AkUtils.readFromPath(modelDesc.f2);
@@ -152,7 +152,7 @@ public class ModelStreamUtils {
 			new FilePath(new Path(filePath.getPath(), toStringPresentation(timestamp)), filePath.getFileSystem())
 		);
 
-		return CsvUtil.schemaStr2Schema(meta.schemaStr);
+		return TableUtil.schemaStr2Schema(meta.schemaStr);
 	}
 
 	public static Tuple3 <Timestamp, Long, FilePath> descModel(FilePath filePath, Timestamp timestamp) {
@@ -240,7 +240,7 @@ public class ModelStreamUtils {
 		TableSchema schema;
 
 		if (schemaStr != null) {
-			schema = CsvUtil.schemaStr2Schema(schemaStr);
+			schema = TableUtil.schemaStr2Schema(schemaStr);
 		} else {
 			try {
 				schema = ModelStreamUtils.getSchemaFromFolder(filePath);
@@ -487,5 +487,31 @@ public class ModelStreamUtils {
 		);
 
 		return colIndex;
+	}
+
+	public static FilePath getLatestModelPath(String filePath) throws IOException {
+		return getLatestModelPath(new FilePath(filePath));
+	}
+
+	public static FilePath getLatestModelPath(FilePath filePath) throws IOException {
+		List <Timestamp> timestamps = ModelStreamUtils.listModels(filePath);
+		if (timestamps.size() == 0) {
+			return null;
+		}
+		timestamps.sort(Timestamp::compareTo);
+		return new FilePath(new Path(filePath.getPath(), toStringPresentation(timestamps.get(timestamps.size() - 1))));
+	}
+
+	public static FilePath getEarliestModelPath(String filePath) throws IOException {
+		return getEarliestModelPath(new FilePath(filePath));
+	}
+
+	public static FilePath getEarliestModelPath(FilePath filePath) throws IOException {
+		List <Timestamp> timestamps = ModelStreamUtils.listModels(filePath);
+		if (timestamps.size() == 0) {
+			return null;
+		}
+		timestamps.sort(Timestamp::compareTo);
+		return new FilePath(new Path(filePath.getPath(), toStringPresentation(timestamps.get(0))));
 	}
 }

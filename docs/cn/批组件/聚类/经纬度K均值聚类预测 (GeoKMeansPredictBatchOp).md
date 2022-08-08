@@ -21,13 +21,14 @@ KMeans 是一个经典的聚类算法。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| predictionDistanceCol | 预测距离列名 | 预测距离列名 | String |  |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| predictionDistanceCol | 预测距离列名 | 预测距离列名 | String |  |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 
@@ -57,7 +58,6 @@ kmeans = GeoKMeansTrainBatchOp()\
                 .setLatitudeCol("f1")\
                 .setK(2)\
                 .linkFrom(inOp1)
-
 kmeans.print()
 
 predict = GeoKMeansPredictBatchOp()\
@@ -126,7 +126,6 @@ model_id|model_info
 1048576|{"clusterId":0,"weight":3.0,"center":"[8.333333333333332, 9.0]","vec":null}
 2097152|{"clusterId":1,"weight":3.0,"center":"[1.0, 1.3333333333333333]","vec":null}
 
-
 #### 预测输出
 f0|f1|pred
 ---|---|----
@@ -136,6 +135,3 @@ f0|f1|pred
 9|10|0
 3|1|1
 10|7|0
-
-
-

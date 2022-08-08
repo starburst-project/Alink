@@ -22,11 +22,19 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.ExecutorUtils;
 import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortDesc;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
 import com.alibaba.alink.common.comqueue.ComContext;
 import com.alibaba.alink.common.comqueue.CompareCriterionFunction;
 import com.alibaba.alink.common.comqueue.CompleteResultFunction;
 import com.alibaba.alink.common.comqueue.IterativeComQueue;
 import com.alibaba.alink.common.comqueue.communication.AllReduce;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
 import com.alibaba.alink.common.model.ModelParamName;
 import com.alibaba.alink.common.utils.DataSetConversionUtil;
 import com.alibaba.alink.common.utils.TableUtil;
@@ -61,8 +69,8 @@ import static com.alibaba.alink.operator.common.tree.TreeModelDataConverter.IMPO
 import static com.alibaba.alink.operator.common.tree.TreeModelDataConverter.IMPORTANCE_SECOND_COL;
 
 /**
- * Base class for fitting random forest and decision tree model.
- * The random forest use the bagging to prevent the overfitting.
+ * Base class for fitting random forest and decision tree model. The random forest use the bagging to prevent the
+ * overfitting.
  *
  * <p>In the operator, we implement three type of decision tree to
  * increase diversity of the forest.
@@ -82,7 +90,26 @@ import static com.alibaba.alink.operator.common.tree.TreeModelDataConverter.IMPO
  * @param <T>
  * @see <a href="https://en.wikipedia.org/wiki/Random_forest">Random_forest</a>
  */
-public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTrainBatchOp <T>> extends BatchOperator <T> {
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = {
+	@PortSpec(PortType.MODEL),
+	@PortSpec(value = PortType.DATA, desc = PortDesc.FEATURE_IMPORTANCE)
+})
+@ParamSelectColumnSpec(
+	name = "featureCols",
+	allowedTypeCollections = TypeCollections.TREE_FEATURE_TYPES
+)
+@ParamSelectColumnSpec(
+	name = "categoricalCols",
+	allowedTypeCollections = TypeCollections.TREE_FEATURE_TYPES
+)
+@ParamSelectColumnSpec(
+	name = "weightCol",
+	allowedTypeCollections = TypeCollections.NUMERIC_TYPES
+)
+@ParamSelectColumnSpec(name = "labelCol")
+public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTrainBatchOp <T>>
+	extends BatchOperator <T> {
 
 	private static final long serialVersionUID = 5757403088524138175L;
 	protected DataSet <Object[]> labels;
@@ -255,9 +282,10 @@ public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTra
 		public Row map(Row value) throws Exception {
 			for (int i = 0; i < value.getArity(); ++i) {
 				if (value.getField(i) == null) {
-					throw new IllegalArgumentException("There should not be null value in training dataset. col: "
-						+ cols[i] + ", "
-						+ "Maybe you can use {@code Imputer} to fill the missing values");
+					throw new AkIllegalOperatorParameterException(
+						"There should not be null value in training dataset. col: "
+							+ cols[i] + ", "
+							+ "Maybe you can use {@code Imputer} to fill the missing values");
 				}
 			}
 			return value;
@@ -434,7 +462,7 @@ public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTra
 								return cnt;
 							}
 
-							throw new RuntimeException(
+							throw new AkIllegalOperatorParameterException(
 								"Can not find total sample count of sample in training dataset if factor > 1.0"
 							);
 						}
@@ -526,7 +554,8 @@ public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTra
 			if (this.data == null) {
 				data = new DenseData(
 					cnt,
-					TreeUtil.getFeatureMeta(localParams.get(RandomForestTrainParams.FEATURE_COLS), categoricalColsSize),
+					TreeUtil.getFeatureMeta(localParams.get(RandomForestTrainParams.FEATURE_COLS),
+						categoricalColsSize),
 					TreeUtil.getLabelMeta(
 						localParams.get(RandomForestTrainParams.LABEL_COL),
 						localParams.get(RandomForestTrainParams.FEATURE_COLS).length,
@@ -647,7 +676,8 @@ public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTra
 			case INFOGAINRATIO:
 				return Criteria.Gain.INFOGAINRATIO;
 			default:
-				throw new IllegalArgumentException("Could not parse the gain type from params. type: " + treeType);
+				throw new AkIllegalOperatorParameterException(
+					"Could not parse the gain type from params. type: " + treeType);
 		}
 	}
 
@@ -705,7 +735,7 @@ public abstract class BaseRandomForestTrainBatchOp<T extends BaseRandomForestTra
 								return cnt.doubleValue();
 							}
 
-							throw new RuntimeException(
+							throw new AkIllegalOperatorParameterException(
 								"Can not find total sample count of sample in training dataset if factor > 1.0"
 							);
 						}

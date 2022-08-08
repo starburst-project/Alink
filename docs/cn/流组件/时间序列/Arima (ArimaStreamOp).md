@@ -5,22 +5,32 @@ Python 类名：ArimaStreamOp
 
 
 ## 功能介绍
-使用Arima进行时间序列预测。
+给定分组，对每一组的数据进行Arima时间序列预测，给出下一时间段的结果。
+
+### 算法原理
+
+Arima全称为自回归积分滑动平均模型(Autoregressive Integrated Moving Average Model,简记ARIMA)，是由博克思(Box)和詹金斯(Jenkins)于70年代初提出一著名时间序列预测方法，所以又称为box-jenkins模型、博克思-詹金斯法.
+
+Arima 详细介绍请见链接 https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| order | 模型(p, d, q) | 模型(p, d, q) | int[] | ✓ |  |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ |  |
-| seasonalOrder | 季节模型(p, d, q) | 季节模型(p, d, q) | int[] |  | null |
-| estMethod | 估计方法 | 估计方法 | String |  | "CssMle" |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| seasonalPeriod | 季节周期 | 季节周期 | Integer |  | 1 |
-| predictNum | 预测条数 | 预测条数 | Integer |  | 1 |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| order | 模型(p, d, q) | 模型(p, d, q) | Integer[] | ✓ | lengthOfArray = 3 |  |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| estMethod | 估计方法 | 估计方法 | String |  | "Mom", "Hr", "Css", "CssMle" | "CssMle" |
+| predictNum | 预测条数 | 预测条数 | Integer |  |  | 1 |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| seasonalOrder | 季节模型(p, d, q) | 季节模型(p, d, q) | int[] |  |  | null |
+| seasonalPeriod | 季节周期 | 季节周期 | Integer |  | [1, +inf) | 1 |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码
@@ -52,7 +62,7 @@ source = dataframeToOperator(data, schemaStr='id int, ts timestamp, val double',
 
 source.link(
 			OverCountWindowStreamOp()
-				.setPartitionCols(["id"])
+				.setGroupCols(["id"])
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg_preceding(ts, val) as data")
@@ -108,7 +118,7 @@ public class ArimaStreamOpTest extends AlinkTestBase {
 
 		source.link(
 			new OverCountWindowStreamOp()
-				.setPartitionCols("id")
+				.setGroupCols("id")
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg(ts, val) as data")

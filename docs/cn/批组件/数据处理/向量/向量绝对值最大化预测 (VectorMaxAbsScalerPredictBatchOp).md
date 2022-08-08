@@ -8,14 +8,15 @@ Python 类名：VectorMaxAbsScalerPredictBatchOp
 
  vector绝对值最大标准化是对vector数据按照最大值和最小值进行标准化的组件, 将数据归一到-1和1之间。
 
-预测组件使用VectorMaxAbsScalerTrainBatchOp训练生成的模型，处理数据之后生成结果数据。
+预测组件使用 VectorMaxAbsScalerTrainBatchOp 训练生成的模型，处理数据之后生成结果数据。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 
@@ -45,7 +46,7 @@ trainOp = VectorMaxAbsScalerTrainBatchOp()\
 model = trainOp.linkFrom(data) 
 
 batchPredictOp = VectorMaxAbsScalerPredictBatchOp()
-batchPredictOp.linkFrom(model, data).collectToDataframe()
+batchPredictOp.linkFrom(model, data).print()
 ```
 ### Java 代码
 ```java
@@ -83,14 +84,12 @@ public class VectorMaxAbsScalerPredictBatchOpTest {
 ```
 ### 运行结果
 
-col1|vec
-----|---
-c|1.0,0.01
-b|-0.024777006937561942,0.09
-d|-0.9900891972249752,1.0
-a|0.09910802775024777,1.0
-b|-0.02180376610505451,0.09
-c|0.9930624380574826,0.01
-a|0.013875123885034686,0.01
-
-
+col|vec
+---|---
+a|0.09910802775024777 1.0
+b|-0.024777006937561942 0.09
+c|0.9930624380574826 0.01
+d|-0.9900891972249752 1.0
+a|0.013875123885034686 0.01
+b|-0.02180376610505451 0.09
+c|1.0 0.01

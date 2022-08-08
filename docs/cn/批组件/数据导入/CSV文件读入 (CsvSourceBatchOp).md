@@ -6,20 +6,31 @@ Python 类名：CsvSourceBatchOp
 
 ## 功能介绍
 读CSV文件。支持从本地、hdfs、http读取
+### 分区选择
+分区目录名格式为"分区名=值"，例如： city=beijing/month=06/day=17;city=hangzhou/month=06/day=18。
+Alink将遍历目录下的分区名和分区值，构造分区表：
+
+city | month | day
+---|---|---
+beijing | 06 | 17
+hangzhou | 06 | 18
+
+使用SQL语句查找分区，例如：CsvSourceBatchOp.setPartitions("city = 'beijing'")，分区选择语法参考[《Flink SQL 内置函数》](https://www.yuque.com/pinshu/alink_tutorial/list_sql_function)，分区值为String类型。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| filePath | 文件路径 | 文件路径 | String | ✓ |  |
-| schemaStr | Schema | Schema。格式为"colname coltype[, colname2, coltype2[, ...]]"，例如"f0 string, f1 bigint, f2 double" | String | ✓ |  |
-| fieldDelimiter | 字段分隔符 | 字段分隔符 | String |  | "," |
-| handleInvalidMethod | 处理无效值的方法 | 处理无效值的方法，可取 error, skip | String |  | "ERROR" |
-| ignoreFirstLine | 是否忽略第一行数据 | 是否忽略第一行数据 | Boolean |  | false |
-| lenient | 是否容错 | 若为true，当解析失败时丢弃该数据；若为false，解析失败是抛异常 | Boolean |  | false |
-| quoteChar | 引号字符 | 引号字符 | Character |  | "\"" |
-| rowDelimiter | 行分隔符 | 行分隔符 | String |  | "\n" |
-| skipBlankLine | 是否忽略空行 | 是否忽略空行 | Boolean |  | true |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| filePath | 文件路径 | 文件路径 | String | ✓ |  |  |
+| schemaStr | Schema | Schema。格式为"colname coltype[, colname2, coltype2[, ...]]"，例如"f0 string, f1 bigint, f2 double" | String | ✓ |  |  |
+| fieldDelimiter | 字段分隔符 | 字段分隔符 | String |  |  | "," |
+| handleInvalidMethod | 处理无效值的方法 | 处理无效值的方法，可取 error, skip | String |  | "ERROR", "SKIP" | "ERROR" |
+| ignoreFirstLine | 是否忽略第一行数据 | 是否忽略第一行数据 | Boolean |  |  | false |
+| lenient | 是否容错 | 若为true，当解析失败时丢弃该数据；若为false，解析失败是抛异常 | Boolean |  |  | false |
+| partitions | 分区名 | 1)单级、单个分区示例：ds=20190729；2)多级分区之间用" / "分隔，例如：ds=20190729/dt=12； 3)多个分区之间用","分隔，例如：ds=20190729,ds=20190730 | String |  |  | null |
+| quoteChar | 引号字符 | 引号字符 | Character |  |  | "\"" |
+| rowDelimiter | 行分隔符 | 行分隔符 | String |  |  | "\n" |
+| skipBlankLine | 是否忽略空行 | 是否忽略空行 | Boolean |  |  | true |
 
 #### 支持的字段类型包括：
 
@@ -57,9 +68,14 @@ Web前端支持用户输入如下转义字符和unicode字符作为分隔符：
 
 
 ## 代码示例
-#### Csv Batch Source
-
+### Python 代码
 ```python
+from pyalink.alink import *
+
+import pandas as pd
+
+useLocalEnv(1)
+
 filePath = 'https://alink-test-data.oss-cn-hangzhou.aliyuncs.com/iris.csv'
 schema = 'sepal_length double, sepal_width double, petal_length double, petal_width double, category string'
 csvSource = CsvSourceBatchOp()\
@@ -69,6 +85,7 @@ csvSource = CsvSourceBatchOp()\
 BatchOperator.collectToDataframe(csvSource)
 ```
 
+### Java 代码
 ```java
 import com.alibaba.alink.operator.batch.source.CsvSourceBatchOp;
 import org.junit.Test;

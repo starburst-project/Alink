@@ -21,8 +21,17 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkIllegalStateException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 import com.alibaba.alink.common.lazy.WithModelInfoBatchOp;
 import com.alibaba.alink.common.linalg.BLAS;
 import com.alibaba.alink.common.linalg.DenseVector;
@@ -34,6 +43,7 @@ import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.common.clustering.BisectingKMeansModelData;
 import com.alibaba.alink.operator.common.clustering.BisectingKMeansModelData.ClusterSummary;
 import com.alibaba.alink.operator.common.clustering.BisectingKMeansModelDataConverter;
+import com.alibaba.alink.operator.common.dataproc.FirstReducer;
 import com.alibaba.alink.operator.common.distance.ContinuousDistance;
 import com.alibaba.alink.operator.common.distance.EuclideanDistance;
 import com.alibaba.alink.operator.common.statistics.StatisticsHelper;
@@ -63,6 +73,11 @@ import java.util.Set;
  * Steinbach, Karypis, and Kumar, A comparison of document clustering techniques, KDD Workshop on Text Mining,
  * 2000.</a>
  */
+@InputPorts(values = {@PortSpec(PortType.DATA)})
+@OutputPorts(values = {@PortSpec(value = PortType.MODEL)})
+@ParamSelectColumnSpec(name = "vectorCol", portIndices = 0, allowedTypeCollections = {TypeCollections.VECTOR_TYPES})
+
+@NameCn("二分K均值聚类训练")
 public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingKMeansTrainBatchOp>
 	implements BisectingKMeansTrainParams <BisectingKMeansTrainBatchOp>,
 	WithModelInfoBatchOp <BisectingKMeansModelInfoBatchOp.BisectingKMeansModelInfo,
@@ -408,7 +423,7 @@ public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingK
 					assignmentInState.add(Tuple2.of(sample.f1, sample.f3));
 				} else {
 					if (!sample.f1.equals(assignmentInState.get(pos).f0)) {
-						throw new RuntimeException("Data out of order.");
+						throw new AkIllegalStateException("Data out of order.");
 					}
 					parentClusterId = assignmentInState.get(pos).f1;
 				}
@@ -525,7 +540,7 @@ public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingK
 						Tuple3 <Long, ClusterSummary, IterInfo> oldSummary,
 						Tuple2 <Long, ClusterSummary> newSummary) {
 						if (newSummary == null) {
-							Preconditions.checkState(!oldSummary.f2.isNew, "Encounter an empty cluster: {}",
+							AkPreconditions.checkState(!oldSummary.f2.isNew, "Encounter an empty cluster: {}",
 								oldSummary);
 							oldSummary.f2.updateIterInfo();
 							return oldSummary;
@@ -565,7 +580,8 @@ public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingK
 
 			@Override
 			public Integer map(BaseVectorSummary value) {
-				Preconditions.checkArgument(value.count() > 0, "The train dataset is empty!");
+				AkPreconditions.checkArgument(value.count() > 0,
+					new AkIllegalDataException("The train dataset is empty!"));
 				return value.vectorSize();
 			}
 		});
@@ -607,7 +623,8 @@ public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingK
 
 		IterativeDataSet <Tuple3 <Long, ClusterSummary, IterInfo>> loop
 			= clustersSummariesAndIterInfo.iterate(Integer.MAX_VALUE);
-		DataSet <Tuple1 <IterInfo>> iterInfo = loop. <Tuple1 <IterInfo>>project(2).first(1);
+		DataSet <Tuple1 <IterInfo>> iterInfo = loop. <Tuple1 <IterInfo>>project(2)
+			.reduceGroup(new FirstReducer <>(1));
 
 		//Get all cluster summaries. Split clusters if at the first step of inner iterations.
 		DataSet <Tuple3 <Long, ClusterSummary, IterInfo>> allClusters = getOrSplitClusters(loop, k,
@@ -665,7 +682,7 @@ public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingK
 		@Override
 		public void mapPartition(Iterable <Tuple2 <Long, ClusterSummary>> values,
 								 Collector <Row> out) {
-			Preconditions.checkArgument(getRuntimeContext().getNumberOfParallelSubtasks() <= 1,
+			AkPreconditions.checkArgument(getRuntimeContext().getNumberOfParallelSubtasks() <= 1,
 				"parallelism greater than one when saving model.");
 			final int dim = (Integer) (getRuntimeContext().getBroadcastVariable(VECTOR_SIZE).get(0));
 			BisectingKMeansModelData modelData = new BisectingKMeansModelData();
@@ -718,7 +735,8 @@ public final class BisectingKMeansTrainBatchOp extends BatchOperator <BisectingK
 			if (distanceType == DistanceType.EUCLIDEAN) {
 				BLAS.axpy(1., v, sum);
 			} else {
-				Preconditions.checkArgument(norm > 0, "Cosine Distance is not defined for zero-length vectors.");
+				AkPreconditions.checkArgument(norm > 0,
+					new AkIllegalDataException("The L2 norm must not be zero when using cosine distance."));
 				BLAS.axpy(1. / Math.sqrt(norm), v, sum);
 			}
 		}

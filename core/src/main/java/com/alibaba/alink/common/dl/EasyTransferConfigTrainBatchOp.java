@@ -1,9 +1,15 @@
 package com.alibaba.alink.common.dl;
 
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.util.StringUtils;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.Internal;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.io.plugin.ResourcePluginFactory;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.tensorflow.TFTableModelTrainBatchOp;
@@ -15,6 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = @PortSpec(PortType.MODEL))
+@ParamSelectColumnSpec(name = "selectedCols")
 @Internal
 public class EasyTransferConfigTrainBatchOp extends BatchOperator <EasyTransferConfigTrainBatchOp>
 	implements EasyTransferConfigTrainParams <EasyTransferConfigTrainBatchOp> {
@@ -26,11 +35,15 @@ public class EasyTransferConfigTrainBatchOp extends BatchOperator <EasyTransferC
 	// `mainScriptFileName` and `entryFuncName` are the main file and its entrypoint provided by our wrapping
 	private static final String mainScriptFileName = "res:///tf_algos/easytransfer/run_easytransfer_train_main.py";
 
+	private final ResourcePluginFactory factory;
+
 	public EasyTransferConfigTrainBatchOp() {
+		this(new Params());
 	}
 
 	public EasyTransferConfigTrainBatchOp(Params params) {
 		super(params);
+		factory = new ResourcePluginFactory();
 	}
 
 	@Override
@@ -45,7 +58,7 @@ public class EasyTransferConfigTrainBatchOp extends BatchOperator <EasyTransferC
 
 		String pythonEnv = getPythonEnv();
 		if (StringUtils.isNullOrWhitespaceOnly(pythonEnv)) {
-			pythonEnv = DLEnvConfig.getTF115DefaultPythonEnv();
+			pythonEnv = DLEnvConfig.getTF115DefaultPythonEnv(factory);
 		}
 
 		Map <String, String> userParams = JsonConverter.fromJson(getUserParams(),

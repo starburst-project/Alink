@@ -7,15 +7,15 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.AlinkTypes;
 import com.alibaba.alink.common.dl.plugin.TFPredictorClassLoaderFactory;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
 import com.alibaba.alink.common.linalg.tensor.FloatTensor;
-import com.alibaba.alink.common.linalg.tensor.TensorTypes;
 import com.alibaba.alink.common.mapper.FlatModelMapper;
 import com.alibaba.alink.common.mapper.IterableModelLoader;
 import com.alibaba.alink.common.model.LabeledModelDataConverter;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.common.utils.TableUtil;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
 import com.alibaba.alink.operator.common.tensorflow.CachedRichModelMapper;
 import com.alibaba.alink.operator.common.tensorflow.TFModelDataConverterUtils;
 import com.alibaba.alink.operator.common.tensorflow.TFTableModelPredictFlatModelMapper;
@@ -80,18 +80,18 @@ public class TFTableModelClassificationFlatModelMapper extends CachedRichModelMa
 
 		String tfOutputSignatureDef = meta.get(TFModelDataConverterUtils.TF_OUTPUT_SIGNATURE_DEF);
 		//TypeInformation<?> tfOutputSignatureType = meta.get(TFModelDataConverterUtils.TF_OUTPUT_SIGNATURE_TYPE);
-		TypeInformation <?> tfOutputSignatureType = TensorTypes.FLOAT_TENSOR;
+		TypeInformation <?> tfOutputSignatureType = AlinkTypes.FLOAT_TENSOR;
 
 		TableSchema dataSchema = getDataSchema();
 		if (CollectionUtils.isNotEmpty(modelData.getPreprocessPipelineModelRows())) {
 			String preprocessPipelineModelSchemaStr = modelData.getPreprocessPipelineModelSchemaStr();
-			TableSchema pipelineModelSchema = CsvUtil.schemaStr2Schema(preprocessPipelineModelSchemaStr);
+			TableSchema pipelineModelSchema = TableUtil.schemaStr2Schema(preprocessPipelineModelSchemaStr);
 
 			try {
 				preprocessLocalPredictor = LocalPredictorLoader.load(
 					modelData.getPreprocessPipelineModelRows(), pipelineModelSchema, dataSchema);
 			} catch (Exception e) {
-				throw new RuntimeException("Cannot initialize preprocess PipelineModel", e);
+				throw new AkUnclassifiedErrorException("Cannot initialize preprocess PipelineModel", e);
 			}
 			dataSchema = preprocessLocalPredictor.getOutputSchema();
 		}
@@ -102,7 +102,7 @@ public class TFTableModelClassificationFlatModelMapper extends CachedRichModelMa
 		tfModelMapperParams.set(TFTableModelPredictParams.OUTPUT_SIGNATURE_DEFS,
 			new String[] {tfOutputSignatureDef});
 		tfModelMapperParams.set(TFTableModelPredictParams.OUTPUT_SCHEMA_STR,
-			CsvUtil.schema2SchemaStr(TableSchema.builder().field(predCol, tfOutputSignatureType).build()));
+			TableUtil.schema2SchemaStr(TableSchema.builder().field(predCol, tfOutputSignatureType).build()));
 		tfModelMapperParams.set(TFTableModelPredictParams.SELECTED_COLS, tfInputCols);
 		if (meta.contains(HasInferBatchSizeDefaultAs256.INFER_BATCH_SIZE)) {
 			tfModelMapperParams.set(HasInferBatchSizeDefaultAs256.INFER_BATCH_SIZE,

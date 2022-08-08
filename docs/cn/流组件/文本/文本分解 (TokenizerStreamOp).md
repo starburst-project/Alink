@@ -6,15 +6,19 @@ Python 类名：TokenizerStreamOp
 
 ## 功能介绍
 
-Tokenizer(标记器)是将文本（如句子）分解成单个词语（通常是单词）的过程。
+对文本按空白符进行切分操作。
+
+### 使用方式
+
+文本列通过参数 selectedCol 指定，输出列通过 outputCol 指定。
 
 ## 参数说明
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ |  |
-| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  | null |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ | 所选列类型为 [STRING] |  |
+| outputCol | 输出结果列 | 输出结果列列名，可选，默认null | String |  |  | null |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 
@@ -80,15 +84,15 @@ public class TokenizerStreamOpTest {
 
 ### 运行结果
 #### 批运行结果
-id|text
----|----
-0|that is an english book!
-1|do you like math?
-2|have a good day!
+| id  | text                     |
+|-----|--------------------------|
+| 0   | that is an english book! |
+| 1   | do you like math?        |
+| 2   | have a good day!         |
 
 #### 流运行结果
-id|text
----|----
-0|that is an english book!
-2|have a good day!
-1|do you like math?
+| id  | text                     |
+|-----|--------------------------|
+| 0   | that is an english book! |
+| 2   | have a good day!         |
+| 1   | do you like math?        |

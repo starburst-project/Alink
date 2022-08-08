@@ -50,6 +50,10 @@ public class PluginDownloader {
 		this(new FilePath(AlinkGlobalConfiguration.getPluginUrl()), pluginDir);
 	}
 
+	public PluginDownloader(String sourceRoot, String pluginDir) {
+		this(new FilePath(sourceRoot), pluginDir);
+	}
+
 	public PluginDownloader(FilePath sourceRoot, String pluginDir) {
 		this.sourceRoot = sourceRoot;
 		this.pluginDir = pluginDir;
@@ -95,12 +99,18 @@ public class PluginDownloader {
 		Path localPath = localJarsPluginPath(pluginName, pluginVersion);
 
 		if (new File(localPath.getPath()).exists()) {
+			LOG.info("Found jars plugin: {}", localPath);
 			return true;
 		}
 
 		localPath = localResourcePluginPath(pluginName, pluginVersion);
 
-		return new File(localPath.getPath()).exists();
+		if (new File(localPath.getPath()).exists()) {
+			LOG.info("Found resource plugin: {}", localPath);
+			return true;
+		}
+
+		return false;
 	}
 
 	public void downloadPlugin(String pluginName, String pluginVersion) throws IOException {
@@ -144,8 +154,17 @@ public class PluginDownloader {
 
 		String pluginFolder = pluginName + "-" + pluginVersion;
 
+		LOG.info(
+			"Plugin: attempt to download {}\njars config: {}\nresource config: {}",
+			pluginFolder,
+			JsonConverter.toJson(jarsPluginConfigs),
+			JsonConverter.toJson(resourcePluginConfigs)
+		);
+
 		if (jarsPluginConfigs.containsKey(pluginName)) {
 			final List <String> jars = getListOfJars(pluginName, pluginVersion);
+
+			LOG.info("Attempt to downloads: {}", JsonConverter.toJson(jars));
 
 			final FilePath remotePath = new FilePath(
 				new Path(getRemoteFlinkRoot().getPath(), pluginFolder),
@@ -173,6 +192,9 @@ public class PluginDownloader {
 				}
 
 				for (String jar : jars) {
+
+					LOG.info("Attempt to download: {}", jar);
+
 					download(
 						new FilePath(new Path(remotePath.getPath(), jar), remotePath.getFileSystem()),
 						new Path(path, jar).getPath()
@@ -186,6 +208,8 @@ public class PluginDownloader {
 
 		} else if (resourcePluginConfigs.containsKey(pluginName)) {
 			final List <String> resources = getListOfResource(pluginName, pluginVersion);
+
+			LOG.info("Attempt to downloads: {}", JsonConverter.toJson(resources));
 
 			final FilePath remotePath = new FilePath(
 				new Path(getRemoteResourceRoot().getPath(), pluginFolder),
@@ -213,6 +237,9 @@ public class PluginDownloader {
 				}
 
 				for (String resource : resources) {
+
+					LOG.info("Attempt to download: {}", resource);
+
 					download(
 						new FilePath(new Path(remotePath.getPath(), resource), remotePath.getFileSystem()),
 						new Path(path, resource).getPath()
@@ -501,8 +528,11 @@ public class PluginDownloader {
 		Path localPath = new Path(root, filePath + ".downloading");
 
 		Path lockFile = new Path(
-			System.getProperty("java.io.tmpdir"), new Path(root, filePath + ".lock").getPath()
+			System.getProperty("java.io.tmpdir"),
+			filePath + ".lock"
 		);
+
+		LOG.info("Lock file {} in plugin downloader.", lockFile);
 
 		new File(lockFile.getParent().getPath()).mkdirs();
 

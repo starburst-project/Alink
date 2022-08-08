@@ -7,6 +7,8 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
 import com.alibaba.alink.common.AlinkGlobalConfiguration;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.io.plugin.ResourcePluginFactory;
 import com.alibaba.alink.common.pyrunner.PyMIMOCalcHandle;
 import com.alibaba.alink.common.pyrunner.PyMIMOCalcRunner;
 import com.alibaba.alink.common.utils.CloseableThreadLocal;
@@ -31,11 +33,14 @@ public class ProphetMapper extends TimeSeriesSingleMapper {
 	private static final Logger LOG = LoggerFactory.getLogger(ProphetMapper.class);
 
 	private transient CloseableThreadLocal <PyMIMOCalcRunner <PyMIMOCalcHandle>> runner;
-	private int predictNum;
+	private final int predictNum;
+
+	private final ResourcePluginFactory factory;
 
 	public ProphetMapper(TableSchema dataSchema, Params params) {
 		super(dataSchema, params);
 		this.predictNum = params.get(ProphetParams.PREDICT_NUM);
+		factory = new ResourcePluginFactory();
 	}
 
 	@Override
@@ -52,7 +57,7 @@ public class ProphetMapper extends TimeSeriesSingleMapper {
 		}
 
 		PyMIMOCalcRunner <PyMIMOCalcHandle> runner =
-			new PyMIMOCalcRunner <>("algo.prophet.PyProphetCalc2", config);
+			new PyMIMOCalcRunner <>("algo.prophet.PyProphetCalc2", config::getOrDefault, factory);
 		runner.open();
 		return runner;
 	}
@@ -98,7 +103,7 @@ public class ProphetMapper extends TimeSeriesSingleMapper {
 		int len = historyTimes.length;
 		long diff = historyTimes[len - 1].getTime() - historyTimes[len - 2].getTime();
 		if (diff <= 0) {
-			throw new RuntimeException("history times must be acs, and not equal.");
+			throw new AkIllegalDataException("history times must be acs, and not equal.");
 		}
 		return diff + "L";
 	}

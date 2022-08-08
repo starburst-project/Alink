@@ -6,7 +6,8 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.linalg.Vector;
@@ -67,7 +68,7 @@ public class PolynomialExpansionMapper extends SISOMapper {
 			}
 		}
 		if (res > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException("The expended polynomial size is too large.");
+			throw new AkIllegalDataException("The expended polynomial size is too large.");
 		}
 		return (int) res;
 
@@ -75,7 +76,7 @@ public class PolynomialExpansionMapper extends SISOMapper {
 
 	@Override
 	protected TypeInformation initOutputColType() {
-		return VectorTypes.VECTOR;
+		return AlinkTypes.VECTOR;
 	}
 
 	@Override

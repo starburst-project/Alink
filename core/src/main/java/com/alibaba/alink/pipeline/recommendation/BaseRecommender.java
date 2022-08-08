@@ -1,10 +1,11 @@
 package com.alibaba.alink.pipeline.recommendation;
 
-import 	org.apache.flink.ml.api.misc.param.Params;
+import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
-import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 import com.alibaba.alink.common.mapper.ModelMapper;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.recommendation.BaseRecommBatchOp;
@@ -14,6 +15,7 @@ import com.alibaba.alink.operator.common.recommendation.RecommMapper;
 import com.alibaba.alink.operator.common.recommendation.RecommType;
 import com.alibaba.alink.operator.stream.StreamOperator;
 import com.alibaba.alink.operator.stream.recommendation.BaseRecommStreamOp;
+import com.alibaba.alink.params.ModelStreamScanParams;
 import com.alibaba.alink.pipeline.LocalPredictable;
 import com.alibaba.alink.pipeline.LocalPredictor;
 import com.alibaba.alink.pipeline.ModelBase;
@@ -28,7 +30,7 @@ import java.util.List;
  * @param <T> class type of the {@link BaseRecommender} implementation itself.
  */
 public abstract class BaseRecommender<T extends BaseRecommender <T>>
-	extends ModelBase <T> implements LocalPredictable {
+	extends ModelBase <T> implements ModelStreamScanParams <T>, LocalPredictable {
 
 	private static final long serialVersionUID = -7172552127830712819L;
 	/**
@@ -45,7 +47,8 @@ public abstract class BaseRecommender<T extends BaseRecommender <T>>
 
 		super(params);
 		this.recommKernelBuilder
-			= Preconditions.checkNotNull(recommKernelBuilder, "recommKernelBuilder can not be null");
+			= AkPreconditions.checkNotNull(recommKernelBuilder,
+			new AkIllegalOperatorParameterException("recommKernelBuilder can not be null"));
 		this.recommType = recommType;
 	}
 
@@ -63,11 +66,11 @@ public abstract class BaseRecommender<T extends BaseRecommender <T>>
 
 	@Override
 	public LocalPredictor collectLocalPredictor(TableSchema inputSchema) {
-		List <Row> modelRows = this.modelData.collect();
+		List <Row> modelRows = this.getModelData().collect();
 		ModelMapper mapper =
 			new RecommMapper(
 				this.recommKernelBuilder, this.recommType,
-				modelData.getSchema(), inputSchema, this.getParams()
+				getModelData().getSchema(), inputSchema, this.getParams()
 			);
 
 		mapper.loadModel(modelRows);

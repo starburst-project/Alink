@@ -2,7 +2,8 @@ package com.alibaba.alink.operator.common.evaluation;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.ml.api.misc.param.Params;
-import org.apache.flink.util.Preconditions;
+
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +15,7 @@ import static com.alibaba.alink.operator.common.evaluation.ClassificationEvaluat
 /**
  * Save the evaluation data for binary classification.
  */
-public final class AccurateBinaryMetricsSummary
+public class AccurateBinaryMetricsSummary
 	implements BaseMetricsSummary <BinaryClassMetrics, AccurateBinaryMetricsSummary> {
 	private static final long serialVersionUID = 4614108912380382179L;
 
@@ -22,6 +23,11 @@ public final class AccurateBinaryMetricsSummary
 	 * Label array.
 	 */
 	Object[] labels;
+
+	/**
+	 * Decision threshold
+	 */
+	double decisionThreshold;
 
 	/**
 	 * The count of samples.
@@ -56,7 +62,13 @@ public final class AccurateBinaryMetricsSummary
 	List <Tuple2 <Double, ConfusionMatrix>> metricsInfoList;
 
 	public AccurateBinaryMetricsSummary(Object[] labels, double logLoss, long total, double auc) {
+		this(labels, 0.5, logLoss, total, auc);
+	}
+
+	public AccurateBinaryMetricsSummary(Object[] labels, double decisionThreshold, double logLoss, long total,
+										double auc) {
 		this.labels = labels;
+		this.decisionThreshold = decisionThreshold;
 		this.logLoss = logLoss;
 		this.total = total;
 		this.auc = auc;
@@ -74,14 +86,14 @@ public final class AccurateBinaryMetricsSummary
 		if (null == binaryClassMetrics) {
 			return this;
 		}
-		Preconditions.checkState(Arrays.equals(labels, binaryClassMetrics.labels), "The labels are not the same!");
-		Preconditions.checkState(Double.compare(this.auc, binaryClassMetrics.auc) == 0, "Auc not equal!");
+		AkPreconditions.checkState(Arrays.equals(labels, binaryClassMetrics.labels), "The labels are not the same!");
+		AkPreconditions.checkState(Double.compare(auc, binaryClassMetrics.auc) == 0, "Auc not equal!");
 
-		this.logLoss += binaryClassMetrics.logLoss;
-		this.total += binaryClassMetrics.total;
-		this.ks = Math.max(this.ks, binaryClassMetrics.ks);
-		this.prc += binaryClassMetrics.prc;
-		this.gini += binaryClassMetrics.gini;
+		logLoss += binaryClassMetrics.logLoss;
+		total += binaryClassMetrics.total;
+		ks = Math.max(ks, binaryClassMetrics.ks);
+		prc += binaryClassMetrics.prc;
+		gini += binaryClassMetrics.gini;
 
 		metricsInfoList.addAll(binaryClassMetrics.metricsInfoList);
 		return this;
@@ -112,7 +124,7 @@ public final class AccurateBinaryMetricsSummary
 
 		BinaryMetricsSummary.setComputationsArrayParams(params, thresholds, matrices);
 		setLoglossParams(params, logLoss, total);
-		int middleIndex = BinaryMetricsSummary.getMiddleThresholdIndex(thresholds);
+		int middleIndex = BinaryMetricsSummary.getMiddleThresholdIndex(thresholds, decisionThreshold);
 		BinaryMetricsSummary.setMiddleThreParams(params, matrices[middleIndex], labelStrs);
 		return new BinaryClassMetrics(params);
 	}
@@ -137,7 +149,7 @@ public final class AccurateBinaryMetricsSummary
 			return;
 		}
 		EvaluationCurvePoint[] rocCurve = new EvaluationCurvePoint[confusionMatrices.length];
-		EvaluationCurvePoint[] recallPrecisionCurve = new EvaluationCurvePoint[confusionMatrices.length];
+		EvaluationCurvePoint[] precisionRecallCurve = new EvaluationCurvePoint[confusionMatrices.length];
 		EvaluationCurvePoint[] liftChart = new EvaluationCurvePoint[confusionMatrices.length];
 		EvaluationCurvePoint[] lorenzCurve = new EvaluationCurvePoint[confusionMatrices.length];
 		long total = totalTrue + totalFalse;
@@ -146,18 +158,18 @@ public final class AccurateBinaryMetricsSummary
 			ConfusionMatrix confusionMatrix = confusionMatrices[i];
 			long curTrue = confusionMatrix.longMatrix.getValue(0, 0);
 			long curFalse = confusionMatrix.longMatrix.getValue(0, 1);
-			double precision = (Double.compare(threshold, 1.0) == 0 && i >= 1 ? recallPrecisionCurve[i - 1].getY() :
+			double precision = (Double.compare(threshold, 1.0) == 0 && i >= 1 ? precisionRecallCurve[i - 1].getY() :
 				curTrue + curFalse == 0 ? 1.0 : 1.0 * curTrue / (curTrue + curFalse));
 			double tpr = (totalTrue == 0 ? 1.0 : 1.0 * curTrue / totalTrue);
 			double fpr = (totalFalse == 0 ? 1.0 : 1.0 * curFalse / totalFalse);
 			double pr = 1.0 * (curTrue + curFalse) / total;
 			rocCurve[i] = new EvaluationCurvePoint(fpr, tpr, threshold);
-			recallPrecisionCurve[i] = new EvaluationCurvePoint(tpr, precision, threshold);
+			precisionRecallCurve[i] = new EvaluationCurvePoint(tpr, precision, threshold);
 			liftChart[i] = new EvaluationCurvePoint(pr, curTrue, threshold);
 			lorenzCurve[i] = new EvaluationCurvePoint(pr, tpr, threshold);
 		}
 		params.set(BinaryClassMetrics.ROC_CURVE, new EvaluationCurve(rocCurve).getXYArray());
-		params.set(BinaryClassMetrics.RECALL_PRECISION_CURVE, new EvaluationCurve(recallPrecisionCurve).getXYArray());
+		params.set(BinaryClassMetrics.PRECISION_RECALL_CURVE, new EvaluationCurve(precisionRecallCurve).getXYArray());
 		params.set(BinaryClassMetrics.LIFT_CHART, new EvaluationCurve(liftChart).getXYArray());
 		params.set(BinaryClassMetrics.LORENZ_CURVE, new EvaluationCurve(lorenzCurve).getXYArray());
 	}

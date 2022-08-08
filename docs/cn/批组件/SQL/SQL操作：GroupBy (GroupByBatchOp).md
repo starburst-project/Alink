@@ -5,14 +5,13 @@ Python 类名：GroupByBatchOp
 
 
 ## 功能介绍
-对批数据进行groupby运算
-
+对批式数据进行sql的GROUPBY操作。
 
 ## 参数说明
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| groupByPredicate | groupby语句 | groupby语句 | String | ✓ |  |
-| selectClause | select语句 | select语句 | String | ✓ |  |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| groupByPredicate | groupby语句 | groupby语句 | String | ✓ |  |  |
+| selectClause | select语句 | select语句 | String | ✓ |  |  |
 
 
 ## 代码示例
@@ -72,6 +71,7 @@ public class GroupByBatchOpTest {
 ```
 
 ### 运行结果
+
 f1|f2
 ---|---
 Nevada|2002

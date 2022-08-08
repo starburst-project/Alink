@@ -2,8 +2,10 @@ package com.alibaba.alink.operator.stream.dataproc;
 
 import org.apache.flink.ml.api.misc.param.Params;
 
+import com.alibaba.alink.common.annotation.NameCn;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.common.dataproc.ImputerModelMapper;
+import com.alibaba.alink.operator.common.tree.predictors.RandomForestModelMapper;
 import com.alibaba.alink.operator.stream.utils.ModelMapStreamOp;
 import com.alibaba.alink.params.dataproc.ImputerPredictParams;
 
@@ -16,10 +18,19 @@ import com.alibaba.alink.params.dataproc.ImputerPredictParams;
  * If mean, will replace missing value with mean of the column.
  * If value, will replace missing value with the value.
  */
+@NameCn("缺失值填充流预测")
 public class ImputerPredictStreamOp extends ModelMapStreamOp <ImputerPredictStreamOp>
 	implements ImputerPredictParams <ImputerPredictStreamOp> {
 
 	private static final long serialVersionUID = -9068184308819465206L;
+
+	public ImputerPredictStreamOp() {
+		super(ImputerModelMapper::new, new Params());
+	}
+
+	public ImputerPredictStreamOp(Params params) {
+		super(ImputerModelMapper::new, params);
+	}
 
 	public ImputerPredictStreamOp(BatchOperator model) {
 		this(model, new Params());

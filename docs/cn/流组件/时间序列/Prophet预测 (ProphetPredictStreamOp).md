@@ -5,22 +5,45 @@ Python 类名：ProphetPredictStreamOp
 
 
 ## 功能介绍
-使用Prophet进行时间序列预测。
+给定prophet模型(通过ProphetTrainBatchOp生成)，使用Prophet进行时间序列预测。
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
+
+### 算法原理
+
+Prophet是facebook开源的一个时间序列预测算法, github地址：https://github.com/facebook/prophet.
+
+Prophet适用于具有明显的内在规律的数据, 例如：
+
+* 有一定的历史数据，有至少几个月的每小时、每天或每周观察的历史数据
+* 有较强的季节性趋势：每周的一些天，每年的一些时间
+* 有已知的以不定期的间隔发生的重要节假日（比如国庆节）
+* 缺失的历史数据或较大的异常数据的数量在合理范围内
+* 对于数据中蕴含的非线性增长的趋势都有一个自然极限或饱和状态
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ |  |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| pythonEnv | Python 环境路径 | Python 环境路径，一般情况下不需要填写。如果是压缩文件，需要解压后得到一个目录，且目录名与压缩文件主文件名一致，可以使用 http://, https://, oss://, hdfs:// 等路径；如果是目录，那么只能使用本地路径，即 file://。 | String |  | "" |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| predictNum | 预测条数 | 预测条数 | Integer |  | 1 |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
-| modelStreamFilePath | 模型流的文件路径 | 模型流的文件路径 | String |  | null |
-| modelStreamScanInterval | 扫描模型路径的时间间隔 | 描模型路径的时间间隔，单位秒 | Integer |  | 10 |
-| modelStreamStartTime | 模型流的起始时间 | 模型流的起始时间。默认从当前时刻开始读。使用yyyy-mm-dd hh:mm:ss.fffffffff格式，详见Timestamp.valueOf(String s) | String |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| predictNum | 预测条数 | 预测条数 | Integer |  |  | 1 |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| pythonEnv | Python 环境路径 | Python 环境路径，一般情况下不需要填写。如果是压缩文件，需要解压后得到一个目录，且目录名与压缩文件主文件名一致，可以使用 http://, https://, oss://, hdfs:// 等路径；如果是目录，那么只能使用本地路径，即 file://。 | String |  |  | "" |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
+| modelStreamFilePath | 模型流的文件路径 | 模型流的文件路径 | String |  |  | null |
+| modelStreamScanInterval | 扫描模型路径的时间间隔 | 描模型路径的时间间隔，单位秒 | Integer |  |  | 10 |
+| modelStreamStartTime | 模型流的起始时间 | 模型流的起始时间。默认从当前时刻开始读。使用yyyy-mm-dd hh:mm:ss.fffffffff格式，详见Timestamp.valueOf(String s) | String |  |  | null |
+
+
 
 ## 代码示例
 ### Python 代码
@@ -34,9 +57,6 @@ useLocalEnv(1)
 import time, datetime
 import numpy as np
 import pandas as pd
-
-downloader = AlinkGlobalConfiguration.getPluginDownloader()
-downloader.downloadPlugin('tf115_python_env_linux')
 
 data = pd.DataFrame([
 			[1,  datetime.datetime.fromtimestamp(1), 10.0],

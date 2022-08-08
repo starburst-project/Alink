@@ -5,17 +5,18 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
 import com.alibaba.alink.common.AlinkGlobalConfiguration;
+import com.alibaba.alink.common.dl.plugin.DLPredictorService;
+import com.alibaba.alink.common.dl.plugin.TFPredictorClassLoaderFactory;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
+import com.alibaba.alink.common.exceptions.AkPluginErrorException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
 import com.alibaba.alink.common.mapper.FlatMapper;
 import com.alibaba.alink.common.utils.OutputColsHelper;
 import com.alibaba.alink.common.utils.TableUtil;
-import com.alibaba.alink.common.dl.plugin.DLPredictorService;
-import com.alibaba.alink.common.dl.plugin.TFPredictorClassLoaderFactory;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
 import com.alibaba.alink.params.dl.HasInferBatchSizeDefaultAs256;
-import com.alibaba.alink.params.dl.HasIntraOpParallelism;
 import com.alibaba.alink.params.dl.HasModelPath;
 import com.alibaba.alink.params.tensorflow.savedmodel.BaseTFSavedModelPredictParams;
 import org.apache.commons.lang3.tuple.Pair;
@@ -102,10 +103,10 @@ public class BaseTFSavedModelPredictRowFlatMapper extends FlatMapper implements 
 			inputSignatureDefs = tfInputCols;
 		}
 
-		Preconditions.checkArgument(params.contains(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR),
-			"Must set outputSchemaStr.");
+		AkPreconditions.checkArgument(params.contains(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR),
+			new AkIllegalOperatorParameterException("Must set outputSchemaStr."));
 		String tfOutputSchemaStr = params.get(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR);
-		TableSchema tfOutputSchema = CsvUtil.schemaStr2Schema(tfOutputSchemaStr);
+		TableSchema tfOutputSchema = TableUtil.schemaStr2Schema(tfOutputSchemaStr);
 		tfOutputCols = tfOutputSchema.getFieldNames();
 		outputSignatureDefs = params.get(BaseTFSavedModelPredictParams.OUTPUT_SIGNATURE_DEFS);
 		if (null == outputSignatureDefs) {
@@ -141,9 +142,9 @@ public class BaseTFSavedModelPredictRowFlatMapper extends FlatMapper implements 
 
 	@Override
 	public void open() {
-		Preconditions.checkArgument(modelPath != null, "Model path is not set.");
-		Integer intraOpParallelism = params.contains(HasIntraOpParallelism.INTRA_OP_PARALLELISM)
-			? params.get(HasIntraOpParallelism.INTRA_OP_PARALLELISM)
+		AkPreconditions.checkArgument(modelPath != null, "Model path is not set.");
+		Integer intraOpParallelism = params.contains(BaseTFSavedModelPredictParams.INTRA_OP_PARALLELISM)
+			? params.get(BaseTFSavedModelPredictParams.INTRA_OP_PARALLELISM)
 			: null;
 
 		try {
@@ -152,7 +153,7 @@ public class BaseTFSavedModelPredictRowFlatMapper extends FlatMapper implements 
 				.getConstructor()
 				.newInstance();
 		} catch (ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ex) {
-			throw new RuntimeException(ex);
+			throw new AkPluginErrorException("Failed to create TFPredictorServiceImpl instance.", ex);
 		}
 
 		Map <String, Object> config = new HashMap <>();
@@ -180,12 +181,12 @@ public class BaseTFSavedModelPredictRowFlatMapper extends FlatMapper implements 
 			inferenceRunnerFuture.get();
 			executorService.shutdown();
 		} catch (InterruptedException | ExecutionException e) {
-			throw new RuntimeException(e);
+			throw new AkUnclassifiedErrorException("Inference runner is failed or interrupted.", e);
 		}
 		try {
 			predictor.close();
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to close predictor", e);
+			throw new AkUnclassifiedErrorException("Failed to close predictor.", e);
 		}
 	}
 
@@ -196,7 +197,7 @@ public class BaseTFSavedModelPredictRowFlatMapper extends FlatMapper implements 
 			try {
 				inferenceRunnerFuture.get(0, TimeUnit.MILLISECONDS);
 			} catch (InterruptedException | ExecutionException e) {
-				throw new RuntimeException(e);
+				throw new AkUnclassifiedErrorException("Inference runner is failed or interrupted.", e);
 			} catch (TimeoutException ignored) {
 			}
 		}

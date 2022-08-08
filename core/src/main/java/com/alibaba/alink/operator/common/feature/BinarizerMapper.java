@@ -4,7 +4,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.linalg.Vector;
@@ -44,7 +45,7 @@ public class BinarizerMapper extends SISOMapper {
 				objectValue0 = constructor.newInstance("0");
 				objectValue1 = constructor.newInstance("1");
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				throw new AkIllegalOperatorParameterException("cannot create binary instance the same class as selectedColType");
 			}
 		}
 	}
@@ -60,7 +61,7 @@ public class BinarizerMapper extends SISOMapper {
 			return selectedColType;
 		}
 
-		return VectorTypes.VECTOR;
+		return AlinkTypes.VECTOR;
 	}
 
 	/**
@@ -111,7 +112,7 @@ public class BinarizerMapper extends SISOMapper {
 				return vec;
 			}
 		} else {
-			throw new IllegalArgumentException("Only support Number and vector!");
+			throw new AkIllegalOperatorParameterException("Only support Number and vector!");
 		}
 	}
 }

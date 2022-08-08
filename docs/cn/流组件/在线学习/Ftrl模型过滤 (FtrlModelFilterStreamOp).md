@@ -5,29 +5,27 @@ Python 类名：FtrlModelFilterStreamOp
 
 
 ## 功能介绍
-该组件是对ftrl 实时训练出来的模型进行实时过滤，将指标不好的模型丢弃掉，仅保留达到用户要求的模型。
+该组件是对ftrl 实时训练出来的模型进行实时过滤，将指标不好的模型丢弃掉，仅保留达到用户要求的模型。目前支持AUC，Accuracy，logLoss三种指标的过滤。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| labelCol | 标签列名 | 输入表中的标签列名 | String | ✓ |  |
-| aucThreshold | 模型过滤的Auc阈值 | 模型过滤的Auc阈值 | Double |  | 0.5 |
-| accuracyThreshold | 模型过滤的Accuracy阈值 | 模型过滤的Accuracy阈值 | Double |  | 0.5 |
-| positiveLabelValueString | 正样本 | 正样本对应的字符串格式。 | String |  | null |
-| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| labelCol | 标签列名 | 输入表中的标签列名 | String | ✓ |  |  |
+| accuracyThreshold | 模型过滤的Accuracy阈值 | 模型过滤的Accuracy阈值 | Double |  |  | 0.5 |
+| aucThreshold | 模型过滤的Auc阈值 | 模型过滤的Auc阈值 | Double |  |  | 0.5 |
+| numEvalSamples | 评估样本数据条数 | 用多少样本数据对模型进行评估 | Integer |  |  | 200000 |
+| positiveLabelValueString | 正样本 | 正样本对应的字符串格式。 | String |  |  | null |
+| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] | null |
 
 
 
 ## 代码示例
+
+** 以下代码仅用于示意，可能需要修改部分代码或者配置环境后才能正常运行！**
+
 ### Python 代码
 ```python
-from pyalink.alink import *
-
-import pandas as pd
-
-useLocalEnv(1)
-
 trainData0 = RandomTableSourceBatchOp() \
             .setNumCols(5) \
             .setNumRows(100) \

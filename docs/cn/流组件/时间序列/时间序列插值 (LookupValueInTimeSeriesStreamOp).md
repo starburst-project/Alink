@@ -7,15 +7,19 @@ Python 类名：LookupValueInTimeSeriesStreamOp
 ## 功能介绍
 在时间序列中查找对应时间的值。
 
+### 注意事项
+- 时间序列列，是特殊的MTable类型，一列是时间，一列是值，参考运行结果的data列。
+- 查找的时间在数据列中不存在时，用相邻时刻的值差值得到结果。
+
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| outputCol | 输出结果列列名 | 输出结果列列名，必选 | String | ✓ |  |
-| timeCol | 时间戳列(TimeStamp) | 时间戳列(TimeStamp) | String | ✓ |  |
-| timeSeriesCol | 时间序列列 | 时间序列列，是特殊的MTable类型，一列是时间，一列是值 | String | ✓ |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| outputCol | 输出结果列列名 | 输出结果列列名，必选 | String | ✓ |  |  |
+| timeCol | 时间戳列(TimeStamp) | 时间戳列(TimeStamp) | String | ✓ | 所选列类型为 [TIMESTAMP] |  |
+| timeSeriesCol | 时间序列列 | 时间序列列，是特殊的MTable类型，一列是时间，一列是值 | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码
@@ -47,7 +51,7 @@ source = dataframeToOperator(data, schemaStr='id int, ts timestamp, val double',
 
 source.link(
 			OverCountWindowStreamOp()
-				.setPartitionCols(["id"])
+				.setGroupCols(["id"])
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg_preceding(ts, val) as data")
@@ -124,4 +128,4 @@ public class LookupValueInTimeSeriesStreamOpTest {
 ### 运行结果
 id|ts|data|out
 ---|---|----|---
-1|1970-01-01 08:00:00.005|{"data":{"ts":["1970-01-01 08:00:00.001","1970-01-01 08:00:00.002","1970-01-01 08:00:00.003","1970-01-01 08:00:00.004","1970-01-01 08:00:00.005","1970-01-01 08:00:00.006","1970-01-01 08:00:00.007","1970-01-01 08:00:00.008","1970-01-01 08:00:00.009","1970-01-01 08:00:00.01"],"val":[10.0,11.0,12.0,13.0,14.0,15.0,16.0,17.0,18.0,19.0]},"schema":"ts TIMESTAMP,val DOUBLE"}|14.0000
+1|1970-01-01 08:00:00.005|MTable(10,2)(ts,val)<br> 1970-01-01 08:00:00.001 &#124; 10.000 <br> 1970-01-01 08:00:00.002 &#124; 11.000 <br>1970-01-01 08:00:00.003 &#124; 12.000 <br> 1970-01-01 08:00:00.004 &#124; 13.000 <br> 1970-01-01 08:00:00.005 &#124; 14.000  |14.0000

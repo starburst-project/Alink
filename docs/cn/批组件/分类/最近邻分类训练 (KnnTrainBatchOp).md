@@ -13,16 +13,18 @@ KNN算法的核心思想是如果一个样本在特征空间中的k个最相邻�
 KNN的训练与一般机器学习模型的训练过程不同：在KNN训练中我们只进行一些字典表的预处理，而在预测过程中才会进行计算预测每个数据点的类别。
 因此，KNN的训练和预测通常同时使用，一般不单独使用。
 
+支持 EUCLIDEAN 和 COSINE 两种距离计算方式。
+
 ## 参数说明
 
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| labelCol | 标签列名 | 输入表中的标签列名 | String | ✓ |  |
-| featureCols | 特征列名数组 | 特征列名数组，默认全选 | String[] |  | null |
-| distanceType | 距离度量方式 | 聚类使用的距离类型 | String |  | "EUCLIDEAN" |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| labelCol | 标签列名 | 输入表中的标签列名 | String | ✓ |  |  |
+| distanceType | 距离度量方式 | 聚类使用的距离类型 | String |  | "EUCLIDEAN", "COSINE" | "EUCLIDEAN" |
+| featureCols | 特征列名数组 | 特征列名数组，默认全选 | String[] |  |  | null |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  |  | null |
 
 
 ## 代码示例

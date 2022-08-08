@@ -7,15 +7,17 @@ Python 类名：VectorToJsonStreamOp
 ## 功能介绍
 将数据格式从 Vector 转成 Json
 
+一条输入数据对应一条输出数据，setJsonCol设置json输出列名，setReservedCols设置保留的输入列。
+在输出json列中，vector的下标生成json中的key，vector的值生成json中的value。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| jsonCol | JSON列名 | JSON列的列名 | String | ✓ |  |
-| vectorCol | 向量列名 | 向量列对应的列名 | String | ✓ |  |
-| handleInvalid | 解析异常处理策略 | 解析异常处理策略，可选为ERROR（抛出异常）或者SKIP（输出NULL） | String |  | "ERROR" |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| jsonCol | JSON列名 | JSON列的列名 | String | ✓ |  |  |
+| vectorCol | 向量列名 | 向量列对应的列名 | String | ✓ | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] |  |
+| handleInvalid | 解析异常处理策略 | 解析异常处理策略，可选为ERROR（抛出异常）或者SKIP（输出NULL） | String |  | "ERROR", "SKIP" | "ERROR" |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
 
 ## 代码示例
 ### Python 代码
@@ -58,7 +60,8 @@ public class VectorToJsonStreamOpTest {
 	@Test
 	public void testVectorToJsonStreamOp() throws Exception {
 		List <Row> df = Arrays.asList(
-			Row.of("1", "{\"f0\":\"1.0\",\"f1\":\"2.0\"}", "$3$0:1.0 1:2.0", "f0:1.0,f1:2.0", "1.0,2.0", 1.0, 2.0)
+			Row.of("1", "{\"f0\":\"1.0\",\"f1\":\"2.0\"}", "$3$0:1.0 1:2.0", "f0:1.0,f1:2.0", "1.0,2.0", 1.0, 2.0),
+			Row.of("2", "{\"f0\":\"1.0\",\"f1\":\"2.0\"}", "$3$0:4.0 1:8.0", "f0:1.0,f1:2.0", "1.0,2.0", 1.0, 2.0)
 		);
 		StreamOperator <?> data = new MemSourceStreamOp(df,
 			"row string, json string, vec string, kv string, csv string, f0 double, f1 double");
@@ -74,8 +77,8 @@ public class VectorToJsonStreamOpTest {
 ```
 
 ### 运行结果
-    
-|row|json|
-|---|----|
-| 1 |{"1":"1.0","2":"2.0"}|
-| 2 |{"1":"4.0","2":"8.0"}|
+
+row|json
+---|----
+1|{"0":"1.0","1":"2.0"}
+2|{"0":"4.0","1":"8.0"}

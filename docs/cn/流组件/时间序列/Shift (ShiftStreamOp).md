@@ -5,19 +5,24 @@ Python 类名：ShiftStreamOp
 
 
 ## 功能介绍
-使用Shift进行时间序列预测。
+给定分组，对每一组的数据使用Shift进行时间序列预测,使用ShiftNum之前的数据作为预测结果。
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
+
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ |  |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| shiftNum | shift个数 | shift个数 | Integer |  | 7 |
-| predictNum | 预测条数 | 预测条数 | Integer |  | 1 |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| predictNum | 预测条数 | 预测条数 | Integer |  |  | 1 |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| shiftNum | shift个数 | shift个数 | Integer |  |  | 7 |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码
@@ -49,7 +54,7 @@ source = dataframeToOperator(data, schemaStr='id int, ts timestamp, val string',
 
 source.link(
 			OverCountWindowStreamOp()
-				.setPartitionCols(["id"])
+				.setGroupCols(["id"])
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg_preceding(ts, val) as data")
@@ -107,7 +112,7 @@ public class ShiftStreamOpTest {
 
 		source.link(
 			new OverCountWindowStreamOp()
-				.setPartitionCols("id")
+				.setGroupCols("id")
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg(ts, val) as data")

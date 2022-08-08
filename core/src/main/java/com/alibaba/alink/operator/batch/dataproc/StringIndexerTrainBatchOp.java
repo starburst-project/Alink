@@ -13,6 +13,15 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.NameEn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.common.dataproc.HugeStringIndexerUtil;
@@ -34,6 +43,12 @@ import com.alibaba.alink.params.dataproc.StringIndexerTrainParams;
  * <li>alphabet_desc</li>
  * </ol>
  */
+@InputPorts(values = @PortSpec(value = PortType.DATA))
+@OutputPorts(values = @PortSpec(value = PortType.MODEL))
+@ParamSelectColumnSpec(name = "selectedCol", allowedTypeCollections = TypeCollections.INT_LONG_STRING_TYPES)
+@ParamSelectColumnSpec(name = "selectedCols", allowedTypeCollections = TypeCollections.INT_LONG_STRING_TYPES)
+@NameCn("字符串编码训练")
+@NameEn("String Indexer Train")
 public final class StringIndexerTrainBatchOp
 	extends BatchOperator <StringIndexerTrainBatchOp>
 	implements StringIndexerTrainParams <StringIndexerTrainBatchOp> {
@@ -66,7 +81,7 @@ public final class StringIndexerTrainBatchOp
 		TypeInformation[] types = TableUtil.findColTypes(in.getSchema(), allSelectCols);
 		for (TypeInformation type : types) {
 			if (!type.equals(types[0])) {
-				throw new RuntimeException("All selectCols must be the same type!");
+				throw new AkIllegalOperatorParameterException("All selectCols must be the same type!");
 			}
 		}
 		DataSet <Tuple2 <Integer, String>> inputRows = ((DataSet <Row>) in.select(allSelectCols).getDataSet()).flatMap(

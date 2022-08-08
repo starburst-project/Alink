@@ -5,17 +5,18 @@ Python 类名：GmmTrainBatchOp
 
 
 ## 功能介绍
-高斯混合模型聚类
+混合模型（Mixture Model）是一个可以用来表示在总体分布中含有K个子分布的概率模型。换句话说，混合模型表示了观测数据在总体中的概率分布，它是一个由K个子分布组成的混合分布。
+而高斯混合模型（Gaussian Mixture Model, GMM）可以用来表示在总体分布中含有K个高斯子分布的概率模型。它通常可以被用作分类模型。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| vectorCol | 向量列名 | 向量列对应的列名 | String | ✓ |  |
-| epsilon | 收敛阈值 | 当两轮迭代的中心点距离小于epsilon时，算法收敛。 | Double |  | 1.0E-4 |
-| k | 聚类中心点数量 | 聚类中心点数量 | Integer |  | 2 |
-| maxIter | 最大迭代步数 | 最大迭代步数，默认为 100 | Integer |  | 100 |
-| randomSeed | 随机数种子 | 随机数种子 | Integer |  | 0 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| vectorCol | 向量列名 | 向量列对应的列名 | String | ✓ | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] |  |
+| epsilon | 收敛阈值 | 当两轮迭代的中心点距离小于epsilon时，算法收敛。 | Double |  |  | 1.0E-4 |
+| k | 聚类中心点数量 | 聚类中心点数量 | Integer |  |  | 2 |
+| maxIter | 最大迭代步数 | 最大迭代步数，默认为 100 | Integer |  | [1, +inf) | 100 |
+| randomSeed | 随机数种子 | 随机数种子 | Integer |  |  | 0 |
 
 ## 代码示例
 ### Python 代码

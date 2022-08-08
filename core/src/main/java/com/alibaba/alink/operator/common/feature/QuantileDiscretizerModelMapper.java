@@ -9,7 +9,11 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkIllegalArgumentException;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.mapper.ModelMapper;
 import com.alibaba.alink.operator.common.tree.Preprocessing;
@@ -63,7 +67,7 @@ public class QuantileDiscretizerModelMapper extends ModelMapper implements Clone
 					mapperBuilder.vectorSize.put(i, maxIndex + 1);
 					break;
 				default:
-					throw new UnsupportedOperationException("Unsupported now.");
+					throw new AkUnsupportedOperationException("Unsupported now.");
 			}
 
 			if (mapperBuilder.paramsBuilder.dropLast) {
@@ -139,9 +143,9 @@ public class QuantileDiscretizerModelMapper extends ModelMapper implements Clone
 							predictIndices2[i] = null;
 							break;
 						case ERROR:
-							throw new RuntimeException("Unseen token: " + val);
+							throw new AkIllegalDataException("Unseen token: " + val);
 						default:
-							throw new IllegalArgumentException("Invalid handle invalid strategy.");
+							throw new AkIllegalOperatorParameterException("Invalid handle invalid strategy.");
 					}
 				}
 			}
@@ -211,7 +215,7 @@ public class QuantileDiscretizerModelMapper extends ModelMapper implements Clone
 					Preconditions.checkArgument(resultCols.length == selectedCols.length,
 						"Input column name is not match output column name.");
 					resultColTypes = new TypeInformation[resultCols.length];
-					Arrays.fill(resultColTypes, VectorTypes.SPARSE_VECTOR);
+					Arrays.fill(resultColTypes, AlinkTypes.SPARSE_VECTOR);
 					break;
 				}
 				case ASSEMBLED_VECTOR: {
@@ -219,11 +223,11 @@ public class QuantileDiscretizerModelMapper extends ModelMapper implements Clone
 					Preconditions.checkArgument(null != outputCols && outputCols.length == 1,
 						"When encode is ASSEMBLED_VECTOR, outputCols must be given and the length must be 1!");
 					resultColTypes = new TypeInformation[resultCols.length];
-					Arrays.fill(resultColTypes, VectorTypes.SPARSE_VECTOR);
+					Arrays.fill(resultColTypes, AlinkTypes.SPARSE_VECTOR);
 					break;
 				}
 				default: {
-					throw new IllegalArgumentException("Not support encode: " + encode.name());
+					throw new AkIllegalOperatorParameterException("Not support encode: " + encode.name());
 				}
 			}
 			dropLast = params.get(QuantileDiscretizerPredictParams.DROP_LAST);
@@ -395,7 +399,7 @@ public class QuantileDiscretizerModelMapper extends ModelMapper implements Clone
 				calcResultColIndices = new int[] {0};
 				break;
 			default:
-				throw new RuntimeException("Not support encode type!");
+				throw new AkUnsupportedOperationException("Not support encode type!");
 		}
 		setResultRow(predictIndices, encode, dropIndex, vectorSize,
 			dropLast, assembledVectorSize, result, calcResultColIndices);
@@ -454,7 +458,7 @@ public class QuantileDiscretizerModelMapper extends ModelMapper implements Clone
 				break;
 			}
 			default: {
-				throw new RuntimeException("Not support encode type!");
+				throw new AkUnsupportedOperationException("Not support encode type!");
 			}
 		}
 	}

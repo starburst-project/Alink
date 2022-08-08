@@ -1,6 +1,5 @@
 package com.alibaba.alink.common.dl;
 
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.functions.Partitioner;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
@@ -10,22 +9,27 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.StringUtils;
 
 import com.alibaba.alink.common.AlinkGlobalConfiguration;
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.Internal;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.dl.utils.PythonFileUtils;
+import com.alibaba.alink.common.io.plugin.ResourcePluginFactory;
 import com.alibaba.alink.common.utils.DataSetConversionUtil;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.source.TableSourceBatchOp;
+import com.alibaba.alink.operator.common.classification.tensorflow.TFTableModelClassificationModelDataConverter;
 import com.alibaba.alink.operator.common.nlp.bert.BertTokenizerMapper;
 import com.alibaba.alink.operator.common.nlp.bert.tokenizer.EncodingKeys;
-import com.alibaba.alink.common.dl.utils.PythonFileUtils;
 import com.alibaba.alink.operator.common.tensorflow.CommonUtils.ConstructModelMapPartitionFunction;
 import com.alibaba.alink.operator.common.tensorflow.CommonUtils.SortLabelsReduceGroupFunction;
 import com.alibaba.alink.params.dl.HasBatchSizeDefaultAs32;
 import com.alibaba.alink.params.dl.HasCheckpointFilePathDefaultAsNull;
 import com.alibaba.alink.params.dl.HasIntraOpParallelism;
 import com.alibaba.alink.params.dl.HasLearningRateDefaultAs0001;
-import com.alibaba.alink.operator.common.classification.tensorflow.TFTableModelClassificationModelDataConverter;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
 import com.alibaba.alink.params.dl.HasModelPath;
 import com.alibaba.alink.params.dl.HasNumPssDefaultAsNull;
 import com.alibaba.alink.params.dl.HasNumWorkersDefaultAsNull;
@@ -62,6 +66,8 @@ import static com.alibaba.alink.common.dl.EasyTransferUtils.mapLabelToIntIndex;
 import static com.alibaba.alink.operator.common.tensorflow.CommonUtils.PREPROCESS_PIPELINE_MODEL_BC_NAME;
 import static com.alibaba.alink.operator.common.tensorflow.CommonUtils.SORTED_LABELS_BC_NAME;
 
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = @PortSpec(PortType.MODEL))
 @Internal
 public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp <T>> extends BatchOperator <T> {
 
@@ -77,12 +83,15 @@ public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp
 		.map(BertTokenizerMapper::prependPrefix)
 		.toArray(String[]::new);
 
+	private final ResourcePluginFactory factory;
+
 	public BaseEasyTransferTrainBatchOp() {
 		this(new Params());
 	}
 
 	public BaseEasyTransferTrainBatchOp(Params params) {
 		super(params);
+		factory = new ResourcePluginFactory();
 	}
 
 	public static Map <String, Object> getPreprocessConfig(Params params, boolean doTokenizer) {
@@ -124,11 +133,11 @@ public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp
 		return config;
 	}
 
-	public static Map <String, Object> getModelConfig(Params params) {
+	public static Map <String, Object> getModelConfig(Params params, ResourcePluginFactory factory) {
 		Map <String, Object> config = new HashMap <>();
 		if (!params.contains(HasModelPath.MODEL_PATH) || (null == params.get(HasModelPath.MODEL_PATH))) {
 			params.set(HasModelPath.MODEL_PATH,
-				BertResources.getBertModelCkpt(params.get(HasBertModelName.BERT_MODEL_NAME)));
+				BertResources.getBertModelCkpt(factory, params.get(HasBertModelName.BERT_MODEL_NAME)));
 		}
 
 		TaskType taskType = params.get(HasTaskType.TASK_TYPE);
@@ -210,7 +219,8 @@ public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp
 		return m;
 	}
 
-	public static Map <String, Map <String, Object>> getConfig(Params params, boolean doTokenizer) {
+	public static Map <String, Map <String, Object>> getConfig(Params params, boolean doTokenizer,
+															   ResourcePluginFactory factory) {
 		Map <String, Map <String, Object>> customConfig;
 		if (params.contains(HasCustomConfigJson.CUSTOM_CONFIG_JSON)) {
 			String customConfigJson = params.get(HasCustomConfigJson.CUSTOM_CONFIG_JSON);
@@ -221,8 +231,9 @@ public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp
 		}
 
 		Map <String, Map <String, Object>> config = new HashMap <>();
-		config.put("preprocess_config", mergeMap(getPreprocessConfig(params, doTokenizer), customConfig.get("preprocess_config")));
-		config.put("model_config", mergeMap(getModelConfig(params), customConfig.get("model_config")));
+		config.put("preprocess_config",
+			mergeMap(getPreprocessConfig(params, doTokenizer), customConfig.get("preprocess_config")));
+		config.put("model_config", mergeMap(getModelConfig(params, factory), customConfig.get("model_config")));
 		config.put("train_config", mergeMap(getTrainConfig(params), customConfig.get("train_config")));
 		config.put("export_config", mergeMap(getExportConfig(params), customConfig.get("export_config")));
 		return config;
@@ -248,15 +259,15 @@ public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp
 		PipelineModel preprocessPipelineMode = new PipelineModel(bertTokenizer);
 		in = preprocessPipelineMode.transform(in);
 		BatchOperator <?> preprocessPipelineModelOp = preprocessPipelineMode.save();
-		String preprocessPipelineModelSchemaStr = CsvUtil.schema2SchemaStr(preprocessPipelineModelOp.getSchema());
+		String preprocessPipelineModelSchemaStr = TableUtil.schema2SchemaStr(preprocessPipelineModelOp.getSchema());
 
 		Map <String, String> userParams = new HashMap <>();
 
 		String bertModelName = params.get(HasBertModelName.BERT_MODEL_NAME);
 		String bertModelCkptPath =
 			params.contains(HasModelPath.MODEL_PATH) && (null != params.get(HasModelPath.MODEL_PATH))
-			? params.get(HasModelPath.MODEL_PATH)
-			: BertResources.getBertModelCkpt(bertModelName);
+				? params.get(HasModelPath.MODEL_PATH)
+				: BertResources.getBertModelCkpt(factory, bertModelName);
 
 		String checkpointFilePath = params.get(HasCheckpointFilePathDefaultAsNull.CHECKPOINT_FILE_PATH);
 		if (!StringUtils.isNullOrWhitespaceOnly(checkpointFilePath)) {
@@ -275,7 +286,7 @@ public class BaseEasyTransferTrainBatchOp<T extends BaseEasyTransferTrainBatchOp
 			userParams.put("pretrained_ckpt_path", PythonFileUtils.getCompressedFileName(bertModelCkptPath));
 		}
 
-		Map <String, Map <String, Object>> config = getConfig(getParams(), false);
+		Map <String, Map <String, Object>> config = getConfig(getParams(), false, factory);
 		String configJson = JsonConverter.toJson(config);
 
 		LOG.info("EasyTransfer config: {}", configJson);

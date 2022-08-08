@@ -11,6 +11,7 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.annotation.Internal;
 import com.alibaba.alink.common.linalg.Vector;
 import com.alibaba.alink.common.model.ModelParamName;
 import com.alibaba.alink.operator.common.optim.FmOptimizer;
@@ -19,6 +20,7 @@ import com.alibaba.alink.params.recommendation.FmTrainParams;
 /**
  * FM model training.
  */
+@Internal
 public class FmTrainBatchOp<T extends FmTrainBatchOp<T>> extends BaseFmTrainBatchOp<T> {
 
     private static final long serialVersionUID = -3985394692845121356L;
@@ -27,19 +29,10 @@ public class FmTrainBatchOp<T extends FmTrainBatchOp<T>> extends BaseFmTrainBatc
      * construct function.
      *
      * @param params parameters needed by training process.
-     * @param task   Fm task: maybe "classification" or "regression".
+     * @param task   Fm task: maybe "binary_classification" or "regression".
      */
     public FmTrainBatchOp(Params params, Task task) {
         super(params.set(ModelParamName.TASK, task));
-    }
-
-    /**
-     * construct function.
-     *
-     * @param task
-     */
-    public FmTrainBatchOp(Task task) {
-        super(new Params().set(ModelParamName.TASK, task));
     }
 
     /**
@@ -63,7 +56,7 @@ public class FmTrainBatchOp<T extends FmTrainBatchOp<T>> extends BaseFmTrainBatc
             private static final long serialVersionUID = 76796953320215874L;
 
             @Override
-            public FmDataFormat map(Integer value) throws Exception {
+            public FmDataFormat map(Integer value) {
                 return new FmDataFormat(value, dim, initStdev);
             }
         });
@@ -131,6 +124,9 @@ public class FmTrainBatchOp<T extends FmTrainBatchOp<T>> extends BaseFmTrainBatc
             modelData.vectorColName = params.get(FmTrainParams.VECTOR_COL);
             modelData.featureColNames = params.get(FmTrainParams.FEATURE_COLS);
             modelData.dim = dim;
+            modelData.regular = new double[]{params.get(FmTrainParams.LAMBDA_0),
+                params.get(FmTrainParams.LAMBDA_1),
+                params.get(FmTrainParams.LAMBDA_2)};
             modelData.labelColName = params.get(FmTrainParams.LABEL_COL);
             modelData.task = params.get(ModelParamName.TASK);
             modelData.convergenceInfo = value.f1;

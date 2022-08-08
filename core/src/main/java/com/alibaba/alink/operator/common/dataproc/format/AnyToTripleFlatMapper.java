@@ -10,10 +10,11 @@ import org.apache.flink.types.parser.FieldParser;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.StringUtils;
 
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
 import com.alibaba.alink.common.mapper.FlatMapper;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.common.utils.OutputColsHelper;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
+import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.params.dataproc.format.HasHandleInvalidDefaultAsError;
 import com.alibaba.alink.params.dataproc.format.HasHandleInvalidDefaultAsError.HandleInvalid;
 import com.alibaba.alink.params.dataproc.format.ToTripleParams;
@@ -48,7 +49,7 @@ public class AnyToTripleFlatMapper extends FlatMapper implements Serializable {
 	public AnyToTripleFlatMapper(TableSchema dataSchema, Params params) {
 		super(dataSchema, params);
 
-		TableSchema schema = CsvUtil.schemaStr2Schema(params.get(ToTripleParams.TRIPLE_COLUMN_VALUE_SCHEMA_STR));
+		TableSchema schema = TableUtil.schemaStr2Schema(params.get(ToTripleParams.TRIPLE_COLUMN_VALUE_SCHEMA_STR));
 
 		fieldTypes = schema.getFieldTypes();
 		String[] reversedCols = this.params.get(ToTripleParams.RESERVED_COLS);
@@ -90,12 +91,12 @@ public class AnyToTripleFlatMapper extends FlatMapper implements Serializable {
 						output.collect(outputColsHelper
 							.getResultRow(row, Row.of(parsedKey.f1, parsedValue.f1)));
 					} else if (handleInvalid.equals(HandleInvalid.ERROR)) {
-						throw new RuntimeException("Fail to write: " + JsonConverter.toJson(bufMap));
+						throw new AkIllegalDataException(String.format("Fail to write:", JsonConverter.toJson(bufMap)));
 					}
 				}
 			}
 		} else if (handleInvalid.equals(HandleInvalid.ERROR)) {
-			throw new RuntimeException("Fail to read: " + row);
+			throw new AkIllegalDataException(String.format("Fail to write:", row));
 		}
 	}
 

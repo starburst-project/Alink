@@ -5,22 +5,34 @@ Python 类名：AutoGarchBatchOp
 
 
 ## 功能介绍
-使用AutoGarch进行时间序列预测。
+给定分组，对每一组的数据使用AutoGarch进行时间序列预测。
+
+### 算法原理
+
+garch(Generalized AutoRegressive Conditional Heteroskedasticity) 又称广义自回归条件异方差模型,
+
+garch 详细介绍请见链接 https://en.wikipedia.org/wiki/Autoregressive_conditional_heteroskedasticity#GARCH
+
+garch是只需要指定MaxOrder, 不需要指定p/d/q, 对每个分组分别计算出最优的参数，给出预测结果。
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ |  |
-| icType | 评价指标 | 评价指标 | String |  | "AIC" |
-| ifGARCH11 | 是否用garch11 | 是否用garch11 | Boolean |  | true |
-| maxOrder | 模型(p, q)上限 | 模型(p, q)上限 | Integer |  | 10 |
-| minusMean | 是否减去均值 | 是否减去均值 | Boolean |  | true |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| predictNum | 预测条数 | 预测条数 | Integer |  | 1 |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| icType | 评价指标 | 评价指标 | String |  | "AIC", "BIC", "HQIC" | "AIC" |
+| ifGARCH11 | 是否用garch11 | 是否用garch11 | Boolean |  |  | true |
+| maxOrder | 模型(p, q)上限 | 模型(p, q)上限 | Integer |  |  | 10 |
+| minusMean | 是否减去均值 | 是否减去均值 | Boolean |  |  | true |
+| predictNum | 预测条数 | 预测条数 | Integer |  |  | 1 |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码

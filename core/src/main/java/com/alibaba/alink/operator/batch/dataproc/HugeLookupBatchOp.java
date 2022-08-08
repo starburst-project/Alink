@@ -8,6 +8,15 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortDesc;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.ReservedColsWithSecondInputSpec;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
 import com.alibaba.alink.common.utils.OutputColsHelper;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
@@ -16,6 +25,13 @@ import com.alibaba.alink.params.dataproc.LookupParams;
 /**
  * Huge Lookup BatchOp, find values by column value
  */
+@InputPorts(values = {@PortSpec(PortType.MODEL), @PortSpec(PortType.DATA)})
+@OutputPorts(values = {@PortSpec(value = PortType.DATA, desc = PortDesc.OUTPUT_RESULT)})
+@ReservedColsWithSecondInputSpec
+@ParamSelectColumnSpec(name="selectedCols")
+@ParamSelectColumnSpec(name="mapKeyCols")
+@ParamSelectColumnSpec(name="mapValueCols")
+@NameCn("HugeLookup")
 public class HugeLookupBatchOp extends BatchOperator <HugeLookupBatchOp>
 	implements LookupParams <HugeLookupBatchOp> {
 
@@ -44,7 +60,7 @@ public class HugeLookupBatchOp extends BatchOperator <HugeLookupBatchOp>
 		TableSchema dataSchema = data.getSchema();
 
 		if (modelSchema.getFieldNames().length != 2 && (mapKeyColNames == null || mapValueColNames == null)) {
-			throw new RuntimeException("LookUp err : mapKeyCols and mapValueCols should set in parameters.");
+			throw new AkIllegalOperatorParameterException("LookUp err : mapKeyCols and mapValueCols should set in parameters.");
 		}
 
 		final int[] selectedColIndices = TableUtil.findColIndicesWithAssertAndHint(dataSchema, selectedColNames);
@@ -58,7 +74,7 @@ public class HugeLookupBatchOp extends BatchOperator <HugeLookupBatchOp>
 			if (mapKeyColNames != null && mapValueColNames != null) {
 				if (TableUtil.findColTypeWithAssertAndHint(dataSchema, selectedColNames[i])
 					!= TableUtil.findColTypeWithAssertAndHint(modelSchema, mapKeyColNames[i])) {
-					throw new IllegalArgumentException("Data types are not match. selected column type is "
+					throw new AkIllegalOperatorParameterException("Data types are not match. selected column type is "
 						+ TableUtil.findColTypeWithAssertAndHint(dataSchema, selectedColNames[i])
 						+ " , and the map key column type is "
 						+ TableUtil.findColTypeWithAssertAndHint(modelSchema, mapKeyColNames[i])

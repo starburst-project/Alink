@@ -10,6 +10,7 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.exceptions.AkUnimplementedOperationException;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.linalg.VectorUtil;
 import com.alibaba.alink.common.model.ModelDataConverter;
@@ -202,7 +203,7 @@ public class ItemCfRecommModelDataConverter
 				break;
 			}
 			default: {
-				throw new RuntimeException("Not support yet!");
+				throw new AkUnimplementedOperationException("Not support yet!");
 			}
 		}
 		return modelData;
@@ -216,7 +217,7 @@ public class ItemCfRecommModelDataConverter
 
 		for (Row row : modelData.f1) {
 			// To align with meta row.
-			row.setField(2, row.getField(2).toString());
+			row.setField(2, VectorUtil.serialize(row.getField(2)));
 
 			collector.collect(row);
 		}

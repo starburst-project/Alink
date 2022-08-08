@@ -16,9 +16,12 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.AbstractID;
 import org.apache.flink.util.Preconditions;
 
-import com.alibaba.alink.common.AlinkGlobalConfiguration;
 import com.alibaba.alink.common.MLEnvironment;
 import com.alibaba.alink.common.MLEnvironmentFactory;
+import com.alibaba.alink.common.MTable;
+import com.alibaba.alink.common.exceptions.AkFlinkExecutionErrorException;
+import com.alibaba.alink.common.exceptions.AkIllegalOperationException;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
 import com.alibaba.alink.common.io.annotations.AnnotationUtils;
 import com.alibaba.alink.common.io.annotations.IOType;
 import com.alibaba.alink.common.io.annotations.IoOpAnnotation;
@@ -36,7 +39,10 @@ import com.alibaba.alink.operator.batch.sink.BaseSinkBatchOp;
 import com.alibaba.alink.operator.batch.source.BaseSourceBatchOp;
 import com.alibaba.alink.operator.batch.source.TableSourceBatchOp;
 import com.alibaba.alink.operator.batch.sql.GroupByBatchOp;
+import com.alibaba.alink.operator.batch.sql.SelectBatchOp;
+import com.alibaba.alink.operator.batch.statistics.InternalFullStatsBatchOp;
 import com.alibaba.alink.operator.batch.statistics.SummarizerBatchOp;
+import com.alibaba.alink.operator.batch.utils.DiveVisualizer.DiveVisualizerConsumer;
 import com.alibaba.alink.operator.batch.utils.UDFBatchOp;
 import com.alibaba.alink.operator.batch.utils.UDTFBatchOp;
 import com.alibaba.alink.operator.common.sql.BatchSqlOperators;
@@ -158,7 +164,7 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 
 	@Override
 	public BatchOperator <?> select(String fields) {
-		return BatchSqlOperators.select(this, fields);
+		return new SelectBatchOp(fields).setMLEnvironmentId(this.getMLEnvironmentId()).linkFrom(this);
 	}
 
 	@Override
@@ -241,7 +247,8 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 	 * @return The resulted <code>BatchOperator</code> of the "groupBy" operation.
 	 */
 	public BatchOperator <?> groupBy(String groupByPredicate, String selectClause) {
-		return new GroupByBatchOp(groupByPredicate, selectClause).setMLEnvironmentId(this.getMLEnvironmentId()).linkFrom(this);
+		return new GroupByBatchOp(groupByPredicate, selectClause).setMLEnvironmentId(this.getMLEnvironmentId())
+			.linkFrom(this);
 	}
 
 	public BatchOperator <?> rebalance() {
@@ -269,8 +276,16 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 		triggerLazyEvaluation(MLEnvironmentFactory.getDefault());
 	}
 
+	public static void execute(String jobName) throws Exception {
+		triggerLazyEvaluation(MLEnvironmentFactory.getDefault(), jobName);
+	}
+
 	public static void execute(MLEnvironment mlEnv) throws Exception {
 		triggerLazyEvaluation(mlEnv);
+	}
+
+	public static void execute(MLEnvironment mlEnv, String jobName) throws Exception {
+		triggerLazyEvaluation(mlEnv, jobName);
 	}
 
 	public static void setParallelism(int parallelism) {
@@ -302,12 +317,12 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 		MLEnvironment mlEnv = MLEnvironmentFactory.get(getMLEnvironmentId());
 		LazyEvaluation <Pair <BatchOperator <?>, List <Row>>> lazyRows = mlEnv.getLazyObjectsManager().genLazySink(
 			this);
-		try {
-			triggerLazyEvaluation(mlEnv);
-			return lazyRows.getLatestValue().getRight();
-		} catch (Exception e) {
-			throw new RuntimeException("Collect result fail in BatchOperator.", e);
-		}
+		triggerLazyEvaluation(mlEnv);
+		return lazyRows.getLatestValue().getRight();
+	}
+
+	public MTable collectMTable() {
+		return new MTable(collect(), getSchema());
 	}
 
 	@Deprecated
@@ -352,10 +367,10 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 
 	public BatchOperator <?> getSideOutput(int idx) {
 		if (null == this.getSideOutputTables()) {
-			throw new RuntimeException("There is no side output. "
+			throw new AkIllegalOperationException("There is no side output. "
 				+ "Please call 'link' method firstly, or this BatchOperator has no SideOutput.");
 		} else if (idx < 0 || idx >= this.getSideOutputTables().length) {
-			throw new RuntimeException(
+			throw new AkIllegalOperationException(
 				"The index of side output, #" + idx + " , is out of range. Total number of side outputs is "
 					+ this.getSideOutputCount() + ".");
 		} else {
@@ -369,7 +384,19 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 
 	@Override
 	public T print() throws Exception {
-		this.lazyPrint(-1);
+		return print(0);
+	}
+
+	public T print(String title) throws Exception {
+		return print(0, title);
+	}
+
+	public T print(int n) throws Exception {
+		return print(n, null);
+	}
+
+	public T print(int n, String title) throws Exception {
+		this.lazyPrint(n, title);
 		triggerLazyEvaluation(MLEnvironmentFactory.get(getMLEnvironmentId()));
 		return (T) this;
 	}
@@ -461,7 +488,8 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 			ExecutionEnvironment executionEnv = getFunction.apply(type);
 
 			if (env != null && env != executionEnv) {
-				throw new RuntimeException("The operators must be runing in the same ExecutionEnvironment");
+				throw new AkIllegalOperationException("The operators must be running in the same "
+					+ "ExecutionEnvironment");
 			}
 
 			env = executionEnv;
@@ -512,14 +540,23 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 				try {
 					return SerializedListAccumulator.deserializeList(accResult, serializer);
 				} catch (ClassNotFoundException e) {
-					throw new RuntimeException("Cannot find type class of collected data type.", e);
+					throw new AkUnclassifiedErrorException("Cannot find type class of collected data type.", e);
 				} catch (IOException e) {
-					throw new RuntimeException("Serialization error while deserializing collected data", e);
+					throw new AkUnclassifiedErrorException("Serialization error while deserializing collected data",
+						e);
 				}
 			} else {
-				throw new RuntimeException("The call to collect() could not retrieve the DataSet.");
+				throw new AkUnclassifiedErrorException("The call to collect() could not retrieve the DataSet.");
 			}
 		}
+	}
+
+	public T lazyPrint() {
+		return lazyPrint(0, null);
+	}
+
+	public T lazyPrint(String title) {
+		return lazyPrint(0, title);
 	}
 
 	public T lazyPrint(int n) {
@@ -535,9 +572,25 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 				System.out.println(title);
 			}
 			System.out.println(TableUtil.formatTitle(d.getLeft().getColNames()));
+
+			if (0 == n) {
+				List <Row> rows = d.getRight();
+				if (rows.size() > 21) {
+					for (int i = 0; i < 10; i++) {
+						System.out.println(TableUtil.formatRows(rows.get(i)));
+					}
+					System.out.println(" ......");
+					for (int i = rows.size() - 10; i < rows.size(); i++) {
+						System.out.println(TableUtil.formatRows(rows.get(i)));
+					}
+					return;
+				}
+			}
+
 			for (Row row : d.getRight()) {
 				System.out.println(TableUtil.formatRows(row));
 			}
+
 		});
 		return (T) this;
 	}
@@ -552,7 +605,36 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 		return (T) this;
 	}
 
-	private static void triggerLazyEvaluation(MLEnvironment mlEnv) throws Exception {
+	public final T lazyCollectMTable(Consumer <MTable>... callbacks) {
+		LazyObjectsManager lazyObjectsManager = LazyObjectsManager.getLazyObjectsManager(this);
+		LazyEvaluation <Pair <BatchOperator <?>, List <Row>>> lazyRowOps = lazyObjectsManager.genLazySink(this);
+		for (Consumer <MTable> callback : callbacks) {
+			lazyRowOps.addCallback(d -> callback.accept(new MTable(d.getRight(), getSchema())));
+		}
+		return (T) this;
+	}
+
+	public final T lazyVizDive() {
+		sampleWithSize(10000).lazyCollect(new DiveVisualizerConsumer(getColNames()));
+		return (T) this;
+	}
+
+	public final T lazyVizStatistics() {
+		return lazyVizStatistics(getOutputTable().toString());
+	}
+
+	public final T lazyVizStatistics(String tableName) {
+		InternalFullStatsBatchOp internalFullStatsBatchOp = new InternalFullStatsBatchOp().linkFrom(this);
+		internalFullStatsBatchOp.lazyVizFullStats(new String[] {tableName});
+		//noinspection unchecked
+		return (T) this;
+	}
+
+	private static void triggerLazyEvaluation(MLEnvironment mlEnv) {
+		triggerLazyEvaluation(mlEnv, null);
+	}
+
+	private static void triggerLazyEvaluation(MLEnvironment mlEnv, String jobName) {
 		LazyObjectsManager lazyObjectsManager = null;
 		try {
 			lazyObjectsManager = mlEnv.getLazyObjectsManager();
@@ -561,7 +643,12 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 			Map <BatchOperator <?>, LazyEvaluation <Pair <BatchOperator <?>, List <Row>>>> lazyRowOps
 				= lazyObjectsManager.getLazySinks();
 			List <BatchOperator <?>> opsToCollect = new ArrayList <>(lazyRowOps.keySet());
-			List <List <Row>> listRows = collect(opsToCollect.toArray(new BatchOperator[0]));
+			List <List <Row>> listRows;
+			try {
+				listRows = collect(jobName, opsToCollect.toArray(new BatchOperator[0]));
+			} catch (Exception e) {
+				throw new AkFlinkExecutionErrorException("Failed to collect ops data.", e);
+			}
 
 			for (int i = 0; i < opsToCollect.size(); i += 1) {
 				BatchOperator <?> op = opsToCollect.get(i);
@@ -579,6 +666,10 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 	}
 
 	public static List <List <Row>> collect(BatchOperator <?>... batchOperators) throws Exception {
+		return collect(null, batchOperators);
+	}
+
+	private static List <List <Row>> collect(String jobName, BatchOperator <?>... batchOperators) throws Exception {
 		List <MemSinkBatchOp> memSinks = new ArrayList <>();
 
 		Long mlEnvId = MLEnvironmentFactory.DEFAULT_ML_ENVIRONMENT_ID;
@@ -591,10 +682,13 @@ public abstract class BatchOperator<T extends BatchOperator <T>> extends AlgoOpe
 			memSinks.add(memSinkBatchOp);
 		}
 
-		JobExecutionResult res = MLEnvironmentFactory
+		ExecutionEnvironment env = MLEnvironmentFactory
 			.get(mlEnvId)
-			.getExecutionEnvironment()
-			.execute();
+			.getExecutionEnvironment();
+
+		JobExecutionResult res = null == jobName
+			? env.execute()
+			: env.execute(jobName);
 
 		List <List <Row>> ret = new ArrayList <>();
 

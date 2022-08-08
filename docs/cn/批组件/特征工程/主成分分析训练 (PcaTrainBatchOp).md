@@ -8,14 +8,16 @@ Python 类名：PcaTrainBatchOp
 
 主成分分析，是考察多个变量间相关性一种多元统计方法，研究如何通过少数几个主成分来揭示多个变量间的内部结构，即从原始变量中导出少数几个主成分，使它们尽可能多地保留原始变量的信息，且彼此间互不相关，作为新的综合指标。详细介绍请见维基百科链接[wiki](https://en.wikipedia.org/wiki/Principal_component_analysis)。
 
+主成分分析功能包含主成分分析训练和主成分分析预测（批和流)。
+
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| k | 降维后的维度 | 降维后的维度 | Integer | ✓ |  |
-| calculationType | 计算类型 | 计算类型，包含"CORR", "COV"两种。 | String |  | "CORR" |
-| selectedCols | 选中的列名数组 | 计算列对应的列名列表 | String[] |  | null |
-| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| k | 降维后的维度 | 降维后的维度 | Integer | ✓ | [1, +inf) |  |
+| calculationType | 计算类型 | 计算类型，包含"CORR", "COV"两种。 | String |  | "CORR", "COV" | "CORR" |
+| selectedCols | 选中的列名数组 | 计算列对应的列名列表 | String[] |  | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] | null |
+| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] | null |
 
 
 

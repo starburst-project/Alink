@@ -5,17 +5,16 @@ Python 类名：StratifiedSampleBatchOp
 
 
 ## 功能介绍
-
-本算子是对每个类别按照比例进行分层随机抽样。
+分层采样组件。给定输入数据，本算法根据用户指定的不同类别的采样比例进行随机采样。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| strataCol | 分层列 | 分层列 | String | ✓ |  |
-| strataRatios | 采用比率 | 采用比率, eg, a:0.1,b:0.3 | String | ✓ |  |
-| withReplacement | 是否放回 | 是否有放回的采样，默认不放回 | Boolean |  | false |
-| strataRatio | 采用比率 | 采用比率 | Double |  | -1.0 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| strataCol | 分层列 | 分层列 | String | ✓ |  |  |
+| strataRatios | 采用比率 | 采用比率, eg, a:0.1,b:0.3 | String | ✓ |  |  |
+| strataRatio | 采用比率 | 采用比率 | Double |  |  | -1.0 |
+| withReplacement | 是否放回 | 是否有放回的采样，默认不放回 | Boolean |  |  | false |
 
 
 ## 代码示例

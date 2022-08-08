@@ -9,12 +9,12 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.mapper.Mapper;
 import com.alibaba.alink.common.utils.JsonConverter;
-import com.alibaba.alink.common.utils.OutputColsHelper;
 import com.alibaba.alink.common.utils.TableUtil;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
 import com.alibaba.alink.params.dataproc.format.FromColumnsParams;
 import com.alibaba.alink.params.dataproc.format.FromCsvParams;
 import com.alibaba.alink.params.dataproc.format.FromJsonParams;
@@ -88,7 +88,7 @@ public class FormatTransMapper extends Mapper {
 			case CSV:
 				String csvColName = params.get(FromCsvParams.CSV_COL);
 				int csvColIndex = TableUtil.findColIndexWithAssertAndHint(dataSchema.getFieldNames(), csvColName);
-				TableSchema fromCsvSchema = CsvUtil.schemaStr2Schema(params.get(FromCsvParams.SCHEMA_STR));
+				TableSchema fromCsvSchema = TableUtil.schemaStr2Schema(params.get(FromCsvParams.SCHEMA_STR));
 				formatReader = new CsvReader(
 					csvColIndex,
 					fromCsvSchema,
@@ -104,7 +104,7 @@ public class FormatTransMapper extends Mapper {
 				if (params.contains(HasSchemaStr.SCHEMA_STR)) {
 					formatReader = new VectorReader(
 						vectorColIndex,
-						CsvUtil.schemaStr2Schema(params.get(HasSchemaStr.SCHEMA_STR)),
+						TableUtil.schemaStr2Schema(params.get(HasSchemaStr.SCHEMA_STR)),
 						handleInvalid
 					);
 				} else {
@@ -127,7 +127,7 @@ public class FormatTransMapper extends Mapper {
 				formatReader = new ColumnsReader(colIndices, fromColNames);
 				break;
 			default:
-				throw new IllegalArgumentException("Can not translate this type : " + fromFormat);
+				throw new AkUnsupportedOperationException("translate input type unsupported: " + fromFormat);
 		}
 
 		return new Tuple2 <>(formatReader, fromColNames);
@@ -142,7 +142,7 @@ public class FormatTransMapper extends Mapper {
 
 		switch (toFormat) {
 			case COLUMNS:
-				TableSchema schema = CsvUtil.schemaStr2Schema(params.get(ToColumnsParams.SCHEMA_STR));
+				TableSchema schema = TableUtil.schemaStr2Schema(params.get(ToColumnsParams.SCHEMA_STR));
 				formatWriter = new ColumnsWriter(schema);
 				outputColNames = schema.getFieldNames();
 				outputColTypes = schema.getFieldTypes();
@@ -162,7 +162,7 @@ public class FormatTransMapper extends Mapper {
 				break;
 			case CSV:
 				formatWriter = new CsvWriter(
-					CsvUtil.schemaStr2Schema(params.get(ToCsvParams.SCHEMA_STR)),
+					TableUtil.schemaStr2Schema(params.get(ToCsvParams.SCHEMA_STR)),
 					params.get(ToCsvParams.CSV_FIELD_DELIMITER),
 					params.get(ToCsvParams.QUOTE_CHAR)
 				);
@@ -175,10 +175,10 @@ public class FormatTransMapper extends Mapper {
 					fromColNames
 				);
 				outputColNames = new String[] {params.get(ToVectorParams.VECTOR_COL)};
-				outputColTypes = new TypeInformation[] {VectorTypes.VECTOR};
+				outputColTypes = new TypeInformation[] {AlinkTypes.VECTOR};
 				break;
 			default:
-				throw new IllegalArgumentException("Can not translate to this type : " + toFormat);
+				throw new AkUnsupportedOperationException("translate output type unsupported: " + toFormat);
 		}
 
 		return new Tuple3 <>(formatWriter, outputColNames, outputColTypes);
@@ -196,7 +196,7 @@ public class FormatTransMapper extends Mapper {
 		boolean success = formatReaderThreadLocal.get().read(inputBuffer, bufMap);
 		if (!success) {
 			if (isError) {
-				throw new RuntimeException("Fail to read: " + inputBuffer);
+				throw new AkIllegalDataException("Illegal input data:" + inputBuffer);
 			} else {
 				for (int i = 0; i < outputSize; i++) {
 					result.set(i, null);
@@ -207,7 +207,7 @@ public class FormatTransMapper extends Mapper {
 		Tuple2 <Boolean, Row> resultData = formatWriterThreadLocal.get().write(bufMap);
 		if (!resultData.f0) {
 			if (isError) {
-				throw new RuntimeException("Fail to write: " + JsonConverter.toJson(bufMap));
+				throw new AkIllegalDataException("failed to output data:" + JsonConverter.toJson(bufMap));
 			} else {
 				for (int i = 0; i < outputSize; i++) {
 					result.set(i, null);

@@ -8,6 +8,8 @@ Python 类名：MultiHotPredictBatchOp
 
 multi-hot编码，也称多热编码，是与独热编码相对应的一种编码方式。该编码对每一个字符串特征列按照指定分隔符进行分割，分割得到的值存在m个可能值，那么经过多热编码后就变成了m个二元特征。对每一字段编码将会把该字段分割后的每一个值映射到唯一的编码。 因此，编码后的数据会变成稀疏数据，输出结果也是kv的稀疏结构。
 
+组件为多热编码的批式预测组件。
+
 ### 编码结果
 #### 输入
 | col_0 | col_1 |
@@ -100,14 +102,15 @@ $$ vectorSize = distinct token Number + enableElse(true: 1, false:0) + (handleIn
 ## 参数说明
 
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| outputCols | 输出结果列列名数组 | 输出结果列列名数组，必选 | String[] | ✓ |  |
-| selectedCols | 选择的列名 | 计算列对应的列名列表 | String[] | ✓ |  |
-| encode | 编码方法 | 编码方法 | String |  | "ASSEMBLED_VECTOR" |
-| handleInvalid | 未知token处理策略 | 未知token处理策略。"keep"表示用最大id加1代替, "skip"表示补null， "error"表示抛异常 | String |  | "KEEP" |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| outputCols | 输出结果列列名数组 | 输出结果列列名数组，必选 | String[] | ✓ |  |  |
+| selectedCols | 选择的列名 | 计算列对应的列名列表 | String[] | ✓ | 所选列类型为 [STRING] |  |
+| encode | 编码方法 | 编码方法 | String |  | "VECTOR", "ASSEMBLED_VECTOR" | "ASSEMBLED_VECTOR" |
+| handleInvalid | 未知token处理策略 | 未知token处理策略。"keep"表示用最大id加1代替, "skip"表示补null， "error"表示抛异常 | String |  | "KEEP", "ERROR", "SKIP" | "KEEP" |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 ## 代码示例

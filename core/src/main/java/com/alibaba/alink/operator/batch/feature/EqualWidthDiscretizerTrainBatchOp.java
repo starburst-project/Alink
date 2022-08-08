@@ -6,6 +6,14 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
 import com.alibaba.alink.common.lazy.WithModelInfoBatchOp;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
@@ -25,6 +33,10 @@ import static com.alibaba.alink.operator.common.dataproc.SortUtils.OBJECT_COMPAR
  * as model, and can transform a new data using the model.
  * <p>The output is the index of the interval.
  */
+@InputPorts(values = {@PortSpec(PortType.DATA)})
+@OutputPorts(values = {@PortSpec(PortType.MODEL)})
+@ParamSelectColumnSpec(name = "selectedCols", allowedTypeCollections = TypeCollections.NUMERIC_TYPES)
+@NameCn("等宽离散化训练")
 public final class EqualWidthDiscretizerTrainBatchOp extends BatchOperator <EqualWidthDiscretizerTrainBatchOp>
 	implements QuantileDiscretizerTrainParams <EqualWidthDiscretizerTrainBatchOp>,
 	WithModelInfoBatchOp <EqualWidthDiscretizerModelInfoBatchOp.EqualWidthDiscretizerModelInfo,
@@ -45,7 +57,7 @@ public final class EqualWidthDiscretizerTrainBatchOp extends BatchOperator <Equa
 		BatchOperator <?> in = checkAndGetFirst(inputs);
 		if (getParams().contains(QuantileDiscretizerTrainParams.NUM_BUCKETS) && getParams().contains(
 			QuantileDiscretizerTrainParams.NUM_BUCKETS_ARRAY)) {
-			throw new RuntimeException("It can not set num_buckets and num_buckets_array at the same time.");
+			throw new AkIllegalOperatorParameterException("It can not set num_buckets and num_buckets_array at the same time.");
 		}
 
 		String[] quantileColNames = getSelectedCols();

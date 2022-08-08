@@ -12,8 +12,15 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkIllegalArgumentException;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.dataproc.ShuffleBatchOp;
 import com.alibaba.alink.params.recommendation.NegativeItemSamplingParams;
@@ -28,6 +35,13 @@ import java.util.Set;
  * Given a dataset of user-item pairs, generate new user-item pairs and add them to original dataset. For the user in
  * each user-item pair, a "SAMPLING_FACTOR" number of items are sampled.
  */
+@InputPorts(values = {
+	@PortSpec(PortType.DATA)
+})
+@OutputPorts(values = {
+	@PortSpec(PortType.DATA)
+})
+@NameCn("推荐负采样")
 public final class NegativeItemSamplingBatchOp
 	extends BatchOperator <NegativeItemSamplingBatchOp>
 	implements NegativeItemSamplingParams <NegativeItemSamplingBatchOp> {
@@ -46,7 +60,8 @@ public final class NegativeItemSamplingBatchOp
 	public NegativeItemSamplingBatchOp linkFrom(BatchOperator <?>... inputs) {
 		BatchOperator <?> userItemPairs = inputs[0];
 		setMLEnvironmentId(userItemPairs.getMLEnvironmentId());
-		Preconditions.checkArgument(userItemPairs.getColNames().length == 2);
+		AkPreconditions.checkArgument(userItemPairs.getColNames().length == 2,
+			new AkIllegalArgumentException("num of user item pair column is not equal 2."));
 		BatchOperator <?> distinctItems = userItemPairs.select(userItemPairs.getColNames()[1]).distinct();
 		negativeSampling(userItemPairs, distinctItems);
 		this.setOutputTable(this.link(new ShuffleBatchOp()).getOutputTable());
@@ -72,8 +87,10 @@ public final class NegativeItemSamplingBatchOp
 	 */
 	private void negativeSampling(BatchOperator <?> data, BatchOperator <?> distinctItems) {
 		final int samplingFactor = getSamplingFactor();
-		Preconditions.checkArgument(data.getColNames().length == 2);
-		Preconditions.checkArgument(distinctItems.getColNames().length == 1);
+		AkPreconditions.checkArgument(data.getColNames().length == 2,
+			new AkIllegalArgumentException("num of data column is not equal 2."));
+		AkPreconditions.checkArgument(distinctItems.getColNames().length == 1,
+			new AkIllegalDataException("num of distinctItems column is not equal 1."));
 		DataSet <Tuple2 <Object, Object>> historyUserItem = getUserItemDataSet(data);
 
 		DataSet <Object> items = distinctItems.getDataSet()

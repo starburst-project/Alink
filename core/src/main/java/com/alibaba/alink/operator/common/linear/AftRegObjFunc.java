@@ -4,6 +4,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.ml.api.misc.param.Params;
 
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.DenseMatrix;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.MatVecOp;
@@ -66,7 +67,7 @@ public class AftRegObjFunc extends OptimObjFunc {
 	 */
 	@Override
 	protected double calcLoss(Tuple3 <Double, Double, Vector> labelVector, DenseVector coefVector) {
-		/**
+		/*
 		 * loss = censor * coefVector.get(coefVector.size() - 1) - censor * epsilon + Math.exp(epsilon)
 		 * the last one of coefVector is the log(sigma)
 		 */
@@ -270,7 +271,7 @@ public class AftRegObjFunc extends OptimObjFunc {
 
 			return Tuple2.of(weightSum, loss);
 		} else {
-			throw new UnsupportedOperationException(
+			throw new AkUnsupportedOperationException (
 				"loss function can't support second derivative, newton precondition can not work.");
 		}
 	}

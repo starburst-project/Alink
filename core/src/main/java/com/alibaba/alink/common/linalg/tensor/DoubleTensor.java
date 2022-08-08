@@ -1,7 +1,6 @@
 package com.alibaba.alink.common.linalg.tensor;
 
-import org.apache.flink.util.Preconditions;
-
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.tensor.TensorUtil.DoCalcFunctions;
 import org.tensorflow.ndarray.DoubleNdArray;
@@ -39,7 +38,7 @@ public final class DoubleTensor extends NumericalTensor <Double> {
 		this(StdArrays.ndCopyOf(data));
 	}
 
-	DoubleTensor(DoubleNdArray data) {
+	public DoubleTensor(DoubleNdArray data) {
 		super(data, DataType.DOUBLE);
 	}
 
@@ -67,7 +66,7 @@ public final class DoubleTensor extends NumericalTensor <Double> {
 
 	@Override
 	public DoubleTensor reshape(Shape newShape) {
-		Preconditions.checkArgument(newShape.size() == size(), "Shape not matched.");
+		AkPreconditions.checkArgument(newShape.size() == size(), "Shape not matched.");
 		DoubleDataBuffer buffer = DataBuffers.ofDoubles(size());
 		data.read(buffer);
 		return new DoubleTensor(NdArrays.wrap(newShape.toNdArrayShape(), buffer));

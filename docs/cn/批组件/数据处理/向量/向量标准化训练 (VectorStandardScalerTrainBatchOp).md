@@ -8,15 +8,18 @@ Python 类名：VectorStandardScalerTrainBatchOp
 
  标准化是对向量数据进行按正态化处理的组件
 
-生成向量标准化的模型，在VectorStandardScalerPredictBatchOp中加载，对数据做标准化处理。
+VectorStandardScalerTrainBatchOp 计算向量的每一列的均值和方差，组件可以指定默认均值为0，标准差为1。
+生成向量标准化的模型，在 VectorStandardScalerPredictBatchOp 中加载，对数据做标准化处理。
+
+输入的向量可以同时包含稀疏向量和稠密向量，向量维度也可以不相同。输入稠密向量维度不够时，没有的维度默认为0。
  
 ## 参数说明 
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ |  |
-| withMean | 是否使用均值 | 是否使用均值，默认使用 | Boolean |  | true |
-| withStd | 是否使用标准差 | 是否使用标准差，默认使用 | Boolean |  | true |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] |  |
+| withMean | 是否使用均值 | 是否使用均值，默认使用 | Boolean |  |  | true |
+| withStd | 是否使用标准差 | 是否使用标准差，默认使用 | Boolean |  |  | true |
 
 
 ## 代码示例

@@ -4,22 +4,25 @@ import org.apache.flink.ml.api.misc.param.ParamInfo;
 import org.apache.flink.ml.api.misc.param.ParamInfoFactory;
 import org.apache.flink.ml.api.misc.param.WithParams;
 
-public interface HasWindowTime<T> extends WithParams<T> {
+import com.alibaba.alink.common.annotation.DescCn;
+import com.alibaba.alink.common.annotation.NameCn;
 
-    /**
-     * @cn-name 窗口大小
-     * @cn 窗口大小
-     */
-    ParamInfo<Double> WINDOW_TIME = ParamInfoFactory
-        .createParamInfo("windowTime", Double.class)
-        .setDescription("window time interval")
-        .setRequired()
-        .build();
+public interface HasWindowTime<T> extends WithParams <T> {
 
-    default Double getWindowTime() {return get(WINDOW_TIME);}
+	@NameCn("窗口大小")
+	@DescCn("窗口大小")
+	ParamInfo <String> WINDOW_TIME = ParamInfoFactory
+		.createParamInfo("windowTime", String.class)
+		.setDescription("window time interval")
+		.setRequired()
+		.build();
 
-    default T setWindowTime(Double value) {return set(WINDOW_TIME, value);}
+	default String getWindowTime() {return get(WINDOW_TIME);}
 
-    default T setWindowTime(Integer value) {return set(WINDOW_TIME, (double)value);}
+	default T setWindowTime(Double value) {return set(WINDOW_TIME, value.toString());}
+
+	default T setWindowTime(Integer value) {return set(WINDOW_TIME, value.toString());}
+
+	default T setWindowTime(String value) {return set(WINDOW_TIME, value);}
 
 }

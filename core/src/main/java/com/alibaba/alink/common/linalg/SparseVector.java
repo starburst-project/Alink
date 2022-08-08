@@ -1,5 +1,8 @@
 package com.alibaba.alink.common.linalg;
 
+import com.alibaba.alink.common.DataTypeDisplayInterface;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.VectorUtil.VectorSerialType;
 
 import java.nio.ByteBuffer;
@@ -14,7 +17,7 @@ import java.util.function.BiConsumer;
 /**
  * A sparse vector represented by an indices array and a values array.
  */
-public class SparseVector extends Vector {
+public class SparseVector extends Vector implements DataTypeDisplayInterface {
 
 	private static final long serialVersionUID = -3756357155623064883L;
 	/**
@@ -56,9 +59,6 @@ public class SparseVector extends Vector {
 
 	/**
 	 * Construct a sparse vector with the given indices and values.
-	 *
-	 * @throws IllegalArgumentException If size of indices array and values array differ.
-	 * @throws IllegalArgumentException If n >= 0 and the indices are out of bound.
 	 */
 	public SparseVector(int n, int[] indices, double[] values) {
 		this.n = n;
@@ -70,8 +70,6 @@ public class SparseVector extends Vector {
 
 	/**
 	 * Construct a sparse vector with given indices to values map.
-	 *
-	 * @throws IllegalArgumentException If n >= 0 and the indices are out of bound.
 	 */
 	public SparseVector(int n, Map <Integer, Double> kv) {
 		this.n = n;
@@ -101,11 +99,11 @@ public class SparseVector extends Vector {
 	 */
 	private void checkSizeAndIndicesRange() {
 		if (indices.length != values.length) {
-			throw new IllegalArgumentException("Indices size and values size should be the same.");
+			throw new AkUnclassifiedErrorException("Indices size and values size should be the same.");
 		}
 		for (int i = 0; i < indices.length; i++) {
 			if (indices[i] < 0 || (n >= 0 && indices[i] >= n)) {
-				throw new IllegalArgumentException("Index out of bound.");
+				throw new AkUnsupportedOperationException("Index out of bound.");
 			}
 		}
 	}
@@ -283,7 +281,7 @@ public class SparseVector extends Vector {
 
 	@Override
 	public String toString() {
-		return VectorUtil.toString(this);
+		return toDisplaySummary() + " " + toDisplayData(3);
 	}
 
 	@Override
@@ -338,7 +336,7 @@ public class SparseVector extends Vector {
 
 		for (int i = 0; i < indices.length; i++) {
 			if (this.n >= 0 && indices[i] >= this.n) {
-				throw new IllegalArgumentException("Index is larger than vector size.");
+				throw new AkUnclassifiedErrorException("Index is larger than vector size.");
 			}
 			int pos = Arrays.binarySearch(this.indices, indices[i]);
 			if (pos >= 0) {
@@ -359,7 +357,7 @@ public class SparseVector extends Vector {
 	@Override
 	public Vector plus(Vector vec) {
 		if (this.size() != vec.size()) {
-			throw new IllegalArgumentException("The size of the two vectors are different.");
+			throw new AkUnclassifiedErrorException("The size of the two vectors are different.");
 		}
 
 		if (vec instanceof DenseVector) {
@@ -369,14 +367,14 @@ public class SparseVector extends Vector {
 			}
 			return r;
 		} else {
-			return MatVecOp.apply(this, (SparseVector) vec, ((a, b) -> a + b));
+			return MatVecOp.apply(this, (SparseVector) vec, (Double::sum));
 		}
 	}
 
 	@Override
 	public Vector minus(Vector vec) {
 		if (this.size() != vec.size()) {
-			throw new IllegalArgumentException("The size of the two vectors are different.");
+			throw new AkUnclassifiedErrorException("The size of the two vectors are different.");
 		}
 
 		if (vec instanceof DenseVector) {
@@ -426,7 +424,7 @@ public class SparseVector extends Vector {
 
 	private double dot(SparseVector other) {
 		if (this.size() != other.size()) {
-			throw new RuntimeException("the size of the two vectors are different");
+			throw new AkUnclassifiedErrorException("the size of the two vectors are different");
 		}
 
 		double d = 0;
@@ -448,7 +446,7 @@ public class SparseVector extends Vector {
 
 	private double dot(DenseVector other) {
 		if (this.size() != other.size()) {
-			throw new RuntimeException(
+			throw new AkUnclassifiedErrorException(
 				"The size of the two vectors are different: " + this.size() + " vs " + other.size());
 		}
 		double s = 0.;
@@ -596,6 +594,39 @@ public class SparseVector extends Vector {
 		return new SparseVectorVectorIterator();
 	}
 
+	@Override
+	public String toDisplayData(int n) {
+		StringBuilder sbd = new StringBuilder();
+		if (indices.length > 0) {
+			if ((indices.length <= n || n < 0)) {
+				for (int i = 0; i < indices.length - 1; ++i) {
+					sbd.append(indices[i]).append(":").append(values[i]).append(" ");
+				}
+				sbd.append(indices[indices.length - 1]).append(":").append(values[indices.length - 1]);
+			} else {
+				int localSize = n / 2;
+				for (int i = 0; i < n - localSize; ++i) {
+					sbd.append(indices[i]).append(":").append(values[i]).append(" ");
+				}
+				sbd.append("...");
+				for (int i = localSize; i > 0; --i) {
+					int idx = indices.length - i;
+					sbd.append(" ").append(indices[idx]).append(":").append(values[idx]);
+				}
+			}
+		}
+		return sbd.toString();
+	}
+	@Override
+	public String toDisplaySummary() {
+		return String.format("SparseVector(size = %d, nnz = %d)", this.size(), indices.length);
+	}
+
+	@Override
+	public String toShortDisplayData() {
+		return "$" + this.n + "$" + toDisplayData(3);
+	}
+
 	private class SparseVectorVectorIterator implements VectorIterator {
 		private static final long serialVersionUID = -2927257601098812398L;
 		private int cursor = 0;
@@ -613,7 +644,7 @@ public class SparseVector extends Vector {
 		@Override
 		public int getIndex() {
 			if (cursor >= values.length) {
-				throw new RuntimeException("Iterator out of bound.");
+				throw new AkUnclassifiedErrorException("Iterator out of bound.");
 			}
 			return indices[cursor];
 		}
@@ -621,7 +652,7 @@ public class SparseVector extends Vector {
 		@Override
 		public double getValue() {
 			if (cursor >= values.length) {
-				throw new RuntimeException("Iterator out of bound.");
+				throw new AkUnclassifiedErrorException("Iterator out of bound.");
 			}
 			return values[cursor];
 		}

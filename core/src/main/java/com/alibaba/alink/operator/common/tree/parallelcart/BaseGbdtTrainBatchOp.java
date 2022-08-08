@@ -16,8 +16,16 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortDesc;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
 import com.alibaba.alink.common.comqueue.IterativeComQueue;
 import com.alibaba.alink.common.comqueue.communication.AllReduce;
+import com.alibaba.alink.common.exceptions.AkIllegalArgumentException;
 import com.alibaba.alink.common.model.ModelParamName;
 import com.alibaba.alink.common.utils.DataSetConversionUtil;
 import com.alibaba.alink.common.utils.TableUtil;
@@ -68,6 +76,26 @@ import java.util.List;
  * "A communication-efficient parallel algorithm for decision tree", Qi Meng et al., NIPS 2016
  * for an introduction on data-parallel, feature-parallel, etc., algorithms to construct decision forests.
  */
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = {
+	@PortSpec(PortType.MODEL),
+	@PortSpec(value = PortType.DATA, desc = PortDesc.FEATURE_IMPORTANCE)
+})
+@ParamSelectColumnSpec(
+	name = "featureCols", allowedTypeCollections = TypeCollections.TREE_FEATURE_TYPES
+)
+@ParamSelectColumnSpec(
+	name = "vectorCol", allowedTypeCollections = TypeCollections.VECTOR_TYPES
+)
+@ParamSelectColumnSpec(
+	name = "categoricalCols",
+	allowedTypeCollections = TypeCollections.TREE_FEATURE_TYPES
+)
+@ParamSelectColumnSpec(
+	name = "weightCol",
+	allowedTypeCollections = TypeCollections.NUMERIC_TYPES
+)
+@ParamSelectColumnSpec(name = "labelCol")
 public abstract class BaseGbdtTrainBatchOp<T extends BaseGbdtTrainBatchOp <T>> extends BatchOperator <T> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BaseGbdtTrainBatchOp.class);
@@ -120,7 +148,7 @@ public abstract class BaseGbdtTrainBatchOp<T extends BaseGbdtTrainBatchOp <T>> e
 				HasCategoricalCols.CATEGORICAL_COLS,
 				TableUtil.getCategoricalCols(
 					in.getSchema(),
-					getParams().get(GbdtTrainParams.FEATURE_COLS),
+					Preprocessing.checkAndGetOptionalFeatureCols(getParams(), this),
 					getParams().contains(GbdtTrainParams.CATEGORICAL_COLS) ? getParams()
 						.get(GbdtTrainParams.CATEGORICAL_COLS) : null
 				)
@@ -137,14 +165,17 @@ public abstract class BaseGbdtTrainBatchOp<T extends BaseGbdtTrainBatchOp <T>> e
 			getParams().set(
 				ModelParamName.FEATURE_TYPES,
 				FlinkTypeConverter.getTypeString(
-					TableUtil.findColTypes(in.getSchema(), getParams().get(GbdtTrainParams.FEATURE_COLS))
+					TableUtil.findColTypes(
+						in.getSchema(),
+						Preprocessing.checkAndGetOptionalFeatureCols(getParams(), this)
+					)
 				)
 			);
 		}
 
 		if (LossUtils.isRanking(getParams().get(LossUtils.LOSS_TYPE))) {
 			if (!getParams().contains(LambdaMartNdcgParams.GROUP_COL)) {
-				throw new IllegalArgumentException("Group column should be set in ranking loss function.");
+				throw new AkIllegalArgumentException("Group column should be set in ranking loss function.");
 			}
 		}
 
@@ -160,7 +191,7 @@ public abstract class BaseGbdtTrainBatchOp<T extends BaseGbdtTrainBatchOp <T>> e
 					@Override
 					public Row map(Row row) throws Exception {
 						if (null == row.getField(labelColIdx)) {
-							throw new RuntimeException("label col has null values.");
+							throw new AkIllegalArgumentException("label col has null values.");
 						}
 						return row;
 					}
@@ -411,9 +442,13 @@ public abstract class BaseGbdtTrainBatchOp<T extends BaseGbdtTrainBatchOp <T>> e
 
 		//features
 		if (Preprocessing.isSparse(getParams())) {
-			trainCols.add(getParams().get(GbdtTrainParams.VECTOR_COL));
+			trainCols.add(
+				Preprocessing.checkAndGetOptionalVectorCols(getParams(), this)
+			);
 		} else {
-			trainCols.addAll(Arrays.asList(getParams().get(GbdtTrainParams.FEATURE_COLS)));
+			trainCols.addAll(Arrays.asList(
+				Preprocessing.checkAndGetOptionalFeatureCols(getParams(), this)
+			));
 		}
 
 		//label
@@ -431,7 +466,7 @@ public abstract class BaseGbdtTrainBatchOp<T extends BaseGbdtTrainBatchOp <T>> e
 		@Override
 		public Object[] map(Object[] value) throws Exception {
 			if (value == null || value.length != 2) {
-				throw new IllegalArgumentException("The gbdt only support binary class right now.");
+				throw new AkIllegalArgumentException("The gbdt only support binary class right now.");
 			}
 			return value;
 		}

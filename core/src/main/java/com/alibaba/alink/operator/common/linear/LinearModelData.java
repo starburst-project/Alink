@@ -4,6 +4,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 
+import com.alibaba.alink.common.exceptions.AkIllegalModelException;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.model.ModelParamName;
 import com.alibaba.alink.common.utils.JsonConverter;
@@ -15,6 +16,7 @@ import com.alibaba.alink.params.shared.linear.LinearTrainParams;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,7 +73,7 @@ public class LinearModelData implements Serializable {
 	 * @param labelType    label Type.
 	 * @param meta         meta information of model.
 	 * @param featureNames the feature column names.
-	 * @param coefVector
+	 * @param coefVector coefficient of model.
 	 */
 	public LinearModelData(TypeInformation labelType, Params meta, String[] featureNames, DenseVector coefVector) {
 		this.labelType = labelType;
@@ -92,6 +94,7 @@ public class LinearModelData implements Serializable {
 			ModelParamName.HAS_INTERCEPT_ITEM) : true;
 		this.vectorSize = meta.contains(ModelParamName.VECTOR_SIZE) ? meta.get(ModelParamName.VECTOR_SIZE) : 0;
 		this.vectorColName = meta.contains(HasVectorCol.VECTOR_COL) ? meta.get(HasVectorCol.VECTOR_COL) : null;
+		this.labelName = meta.contains(ModelParamName.LABEL_COL_NAME) ? meta.get(ModelParamName.LABEL_COL_NAME) : null;
 	}
 
 	public Params getMetaInfo() {
@@ -116,7 +119,7 @@ public class LinearModelData implements Serializable {
 	public void deserializeModel(Params meta, List <String> data, List <Object> distinctLabels) {
 		setMetaInfo(meta);
 		if (data.size() != 1) {
-			throw new RuntimeException("Not valid model.");
+			throw new AkIllegalModelException("Current model is not valid linear model.");
 		}
 		if (distinctLabels.size() > 0) {
 			this.labelValues = new Object[distinctLabels.size()];
@@ -149,12 +152,11 @@ public class LinearModelData implements Serializable {
 				sbd.append(strs[i]);
 			}
 			Params meta = Params.fromJson(metaStr);
-			List <String> data = Arrays.asList(sbd.toString());
+			List <String> data = Collections.singletonList(sbd.toString());
 			meta.set(ModelParamName.IS_OLD_FORMAT, true);
 			deserializeModel(meta, data, recoverLabelsFromOldFormatModel(meta));
-			return;
 		} else {
-			throw new RuntimeException("Not old format model");
+			throw new AkIllegalModelException("Current model is not an old format model.");
 		}
 	}
 

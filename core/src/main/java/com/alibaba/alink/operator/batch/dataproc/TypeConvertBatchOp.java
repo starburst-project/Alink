@@ -6,9 +6,18 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.Types;
 import org.apache.flink.types.Row;
-import org.apache.flink.util.Preconditions;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.PortDesc;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.utils.VectorSerializeBatchOp;
@@ -25,7 +34,9 @@ import java.util.Set;
  * Convert column datatype
  * TypeConvertBatchOp can convert some columns to the same datatype in one time.
  */
-
+@InputPorts(values = {@PortSpec(PortType.DATA)})
+@OutputPorts(values = {@PortSpec(value = PortType.DATA, desc = PortDesc.OUTPUT_RESULT)})
+@NameCn("类型转换")
 public final class TypeConvertBatchOp extends BatchOperator <TypeConvertBatchOp>
 	implements TypeConvertParams <TypeConvertBatchOp> {
 
@@ -55,10 +66,10 @@ public final class TypeConvertBatchOp extends BatchOperator <TypeConvertBatchOp>
 		TypeInformation[] colTypes = in.getColTypes();
 		List <Integer> vectorCols = new ArrayList <>();
 		for (int colIndice : colIndices) {
-			Preconditions.checkArgument(colIndice >= 0, "Can't find input column.");
-			if (colTypes[colIndice].equals(VectorTypes.VECTOR) ||
-				colTypes[colIndice].equals(VectorTypes.DENSE_VECTOR) ||
-				colTypes[colIndice].equals(VectorTypes.SPARSE_VECTOR)) {
+			AkPreconditions.checkArgument(colIndice >= 0, "Can't find input column.");
+			if (colTypes[colIndice].equals(AlinkTypes.VECTOR) ||
+				colTypes[colIndice].equals(AlinkTypes.DENSE_VECTOR) ||
+				colTypes[colIndice].equals(AlinkTypes.SPARSE_VECTOR)) {
 				vectorCols.add(colIndice);
 			}
 		}
@@ -86,7 +97,7 @@ public final class TypeConvertBatchOp extends BatchOperator <TypeConvertBatchOp>
 		int colCount = this.selectedColNames.length;
 		int allColCount = schema.getFieldNames().length;
 		if (colCount == 0) {
-			throw new RuntimeException("Input data should have at least 1 column.");
+			throw new AkIllegalDataException("Input data should have at least 1 column.");
 		}
 
 		Set <String> colSet = new HashSet <>();
@@ -140,7 +151,7 @@ public final class TypeConvertBatchOp extends BatchOperator <TypeConvertBatchOp>
 						type = "VARCHAR";
 						break;
 					default:
-						throw new RuntimeException("Not support type:" + this.newType);
+						throw new AkUnsupportedOperationException("Not support type:" + this.newType);
 				}
 
 				if (i != 0) {
@@ -179,7 +190,7 @@ public final class TypeConvertBatchOp extends BatchOperator <TypeConvertBatchOp>
 
 		for (String colName : colExist.keySet()) {
 			if (!colExist.get(colName)) {
-				throw new RuntimeException("col:" + colName + " does not exist.");
+				throw new AkIllegalOperatorParameterException("col:" + colName + " does not exist.");
 			}
 		}
 

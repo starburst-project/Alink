@@ -7,6 +7,7 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
 import com.alibaba.alink.common.linalg.BLAS;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.MatVecOp;
@@ -59,13 +60,13 @@ public class BisectingKMeansModelMapper extends RichModelMapper {
 	protected Tuple2 <Object, String> predictResultDetail(SlicedSelectedSample selection) throws Exception {
 		Vector x = VectorUtil.getVector(selection.get(vectorColIdx));
 		if (x.size() != this.modelData.vectorSize) {
-			throw new RuntimeException(
+			throw new AkIllegalDataException(
 				"Dim of predict data not equal to vectorSize of training data: " + this.modelData.vectorSize);
 		}
 		ContinuousDistance distance = this.modelData.distanceType.getFastDistance();
 		Tuple2 <Long, Long> clusterIdAndTreeNodeId = this.tree.predict(x, distance);
 		double[] prob = computeProbability(clusterIdAndTreeNodeId.f1, tree.treeNodeIds);
-		return Tuple2.of(clusterIdAndTreeNodeId.f0, new DenseVector(prob).toString());
+		return Tuple2.of(clusterIdAndTreeNodeId.f0, VectorUtil.serialize(new DenseVector(prob)));
 	}
 
 	private int level(long node) {

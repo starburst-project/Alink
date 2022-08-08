@@ -3,10 +3,10 @@ package com.alibaba.alink.operator.stream.source;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.Table;
 
+import com.alibaba.alink.common.annotation.NameCn;
 import com.alibaba.alink.common.io.annotations.AnnotationUtils;
 import com.alibaba.alink.common.io.annotations.IOType;
 import com.alibaba.alink.common.io.annotations.IoOpAnnotation;
-import com.alibaba.alink.common.probabilistic.XRandom;
 import com.alibaba.alink.operator.common.dataproc.RandomVector;
 import com.alibaba.alink.operator.stream.StreamOperator;
 import com.alibaba.alink.params.io.RandomVectorSourceStreamParams;
@@ -16,11 +16,11 @@ import com.alibaba.alink.params.io.RandomVectorSourceStreamParams;
  */
 
 @IoOpAnnotation(name = "random_vector", ioType = IOType.SourceStream)
+@NameCn("随机生成向量数据源")
 public final class RandomVectorSourceStreamOp extends BaseSourceStreamOp <RandomVectorSourceStreamOp>
 	implements RandomVectorSourceStreamParams <RandomVectorSourceStreamOp> {
 
 	private static final long serialVersionUID = -2004518005886439388L;
-	private XRandom rd = new XRandom();
 
 	public RandomVectorSourceStreamOp() {
 		this(null);
@@ -59,13 +59,17 @@ public final class RandomVectorSourceStreamOp extends BaseSourceStreamOp <Random
 
 		StreamOperator<?> init_data;
 		if (timePerSample != null && idColName != null) {
-			init_data = new NumSeqSourceStreamOp(1, maxRows, idColName, timePerSample, getParams());
-		} else if (timePerSample != null && idColName == null) {
-			init_data = new NumSeqSourceStreamOp(1, maxRows, timePerSample, getParams());
-		} else if (timePerSample == null && idColName != null) {
-			init_data = new NumSeqSourceStreamOp(1, maxRows, idColName, getParams());
+			init_data = new NumSeqSourceStreamOp(1, maxRows, idColName, timePerSample, getParams())
+				.setMLEnvironmentId(getMLEnvironmentId());
+		} else if (timePerSample != null) {
+			init_data = new NumSeqSourceStreamOp(1, maxRows, timePerSample, getParams())
+				.setMLEnvironmentId(getMLEnvironmentId());
+		} else if (idColName != null) {
+			init_data = new NumSeqSourceStreamOp(1, maxRows, idColName, getParams())
+				.setMLEnvironmentId(getMLEnvironmentId());
 		} else {
-			init_data = new NumSeqSourceStreamOp(1, maxRows, getParams());
+			init_data = new NumSeqSourceStreamOp(1, maxRows, getParams())
+				.setMLEnvironmentId(getMLEnvironmentId());
 		}
 
 		return init_data

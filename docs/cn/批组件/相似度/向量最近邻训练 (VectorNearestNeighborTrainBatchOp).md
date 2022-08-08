@@ -5,18 +5,18 @@ Python 类名：VectorNearestNeighborTrainBatchOp
 
 
 ## 功能介绍
-该组件为向量最近邻的训练过程
+该组件为向量最近邻的训练过程，在计算时与 VectorNearestNeighborPredictBatchOp 配合使用。
 
 支持的距离计算方式包含EUCLIDEAN，COSINE，INNERPRODUCT（内积），CITYBLOCK（曼哈顿距离），JACCARD，PEARSON
 
 默认距离EUCLIDEAN
 
 ## 参数说明
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| idCol | id列名 | id列名 | String | ✓ |  |
-| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ |  |
-| metric | 距离度量方式 | 聚类使用的距离类型 | String |  | "EUCLIDEAN" |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| idCol | id列名 | id列名 | String | ✓ |  |  |
+| selectedCol | 选中的列名 | 计算列对应的列名 | String | ✓ | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] |  |
+| metric | 距离度量方式 | 聚类使用的距离类型 | String |  | "EUCLIDEAN", "COSINE", "INNERPRODUCT", "CITYBLOCK", "JACCARD", "PEARSON" | "EUCLIDEAN" |
 
 
 ## 代码示例

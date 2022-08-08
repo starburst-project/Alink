@@ -1,10 +1,10 @@
 package com.alibaba.alink.operator.common.io.csv;
 
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.ml.api.misc.param.Params;
@@ -13,16 +13,21 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
 import com.alibaba.alink.common.MLEnvironmentFactory;
+import com.alibaba.alink.common.annotation.Internal;
 import com.alibaba.alink.common.io.annotations.AnnotationUtils;
 import com.alibaba.alink.common.io.annotations.IOType;
 import com.alibaba.alink.common.io.annotations.IoOpAnnotation;
 import com.alibaba.alink.common.io.filesystem.FilePath;
 import com.alibaba.alink.common.io.filesystem.copy.csv.RowCsvInputFormat;
 import com.alibaba.alink.common.utils.DataSetConversionUtil;
+import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.source.BaseSourceBatchOp;
+import com.alibaba.alink.operator.common.io.partition.CsvSourceCollectorCreator;
+import com.alibaba.alink.operator.common.io.partition.Utils;
 import com.alibaba.alink.operator.common.io.reader.HttpFileSplitReader;
 import com.alibaba.alink.params.io.CsvSourceParams;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -51,7 +56,7 @@ public final class InternalCsvSourceBatchOp extends BaseSourceBatchOp <InternalC
 	public InternalCsvSourceBatchOp(String filePath, TableSchema schema) {
 		this(new Params()
 			.set(FILE_PATH, new FilePath(filePath).serialize())
-			.set(SCHEMA_STR, CsvUtil.schema2SchemaStr(schema))
+			.set(SCHEMA_STR, TableUtil.schema2SchemaStr(schema))
 		);
 	}
 
@@ -59,7 +64,7 @@ public final class InternalCsvSourceBatchOp extends BaseSourceBatchOp <InternalC
 									String fieldDelim, String rowDelim) {
 		this(new Params()
 			.set(FILE_PATH, new FilePath(filePath).serialize())
-			.set(SCHEMA_STR, CsvUtil.schema2SchemaStr(new TableSchema(colNames, colTypes)))
+			.set(SCHEMA_STR, TableUtil.schema2SchemaStr(new TableSchema(colNames, colTypes)))
 			.set(FIELD_DELIMITER, fieldDelim)
 			.set(ROW_DELIMITER, rowDelim)
 		);
@@ -75,8 +80,8 @@ public final class InternalCsvSourceBatchOp extends BaseSourceBatchOp <InternalC
 		final boolean skipBlankLine = getSkipBlankLine();
 		final boolean lenient = getLenient();
 
-		final String[] colNames = CsvUtil.getColNames(schemaStr);
-		final TypeInformation <?>[] colTypes = CsvUtil.getColTypes(schemaStr);
+		final String[] colNames = TableUtil.getColNames(schemaStr);
+		final TypeInformation <?>[] colTypes = TableUtil.getColTypes(schemaStr);
 
 		boolean ignoreFirstLine = getIgnoreFirstLine();
 		String protocol = "";
@@ -91,22 +96,43 @@ public final class InternalCsvSourceBatchOp extends BaseSourceBatchOp <InternalC
 		ExecutionEnvironment execEnv = MLEnvironmentFactory.get(getMLEnvironmentId()).getExecutionEnvironment();
 		TableSchema dummySchema = new TableSchema(new String[] {"f1"}, new TypeInformation[] {Types.STRING});
 
-		if (protocol.equalsIgnoreCase("http") || protocol.equalsIgnoreCase("https")) {
-			HttpFileSplitReader reader = new HttpFileSplitReader(filePath);
-			rows = execEnv
-				.createInput(
-					new GenericCsvInputFormat(reader, dummySchema.getFieldTypes(), rowDelim, rowDelim,
-						ignoreFirstLine),
-					new RowTypeInfo(dummySchema.getFieldTypes(), dummySchema.getFieldNames()))
-				.name("http_csv_source");
+		String partitions = getPartitions();
+
+		if (partitions == null) {
+
+			if (protocol.equalsIgnoreCase("http") || protocol.equalsIgnoreCase("https")) {
+				HttpFileSplitReader reader = new HttpFileSplitReader(filePath);
+				rows = execEnv
+					.createInput(
+						new GenericCsvInputFormat(reader, dummySchema.getFieldTypes(), rowDelim, rowDelim,
+							ignoreFirstLine),
+						new RowTypeInfo(dummySchema.getFieldTypes(), dummySchema.getFieldNames()))
+					.name("http_csv_source");
+			} else {
+				RowCsvInputFormat inputFormat = new RowCsvInputFormat(
+					new Path(filePath), dummySchema.getFieldTypes(),
+					rowDelim, rowDelim, new int[] {0}, true,
+					getFilePath().getFileSystem()
+				);
+				inputFormat.setSkipFirstLineAsHeader(ignoreFirstLine);
+				rows = execEnv.createInput(inputFormat).name("csv_source");
+			}
+
 		} else {
-			RowCsvInputFormat inputFormat = new RowCsvInputFormat(
-				new Path(filePath), dummySchema.getFieldTypes(),
-				rowDelim, rowDelim, new int[] {0}, true,
-				getFilePath().getFileSystem()
-			);
-			inputFormat.setSkipFirstLineAsHeader(ignoreFirstLine);
-			rows = execEnv.createInput(inputFormat).name("csv_source");
+
+			Tuple2 <DataSet <Row>, TableSchema> schemaAndData;
+
+			try {
+				schemaAndData = Utils.readFromPartitionBatch(
+					getParams(), getMLEnvironmentId(),
+					new CsvSourceCollectorCreator(dummySchema, rowDelim, ignoreFirstLine)
+				);
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
+
+			rows = schemaAndData.f0;
+
 		}
 
 		rows = rows.flatMap(new CsvUtil.ParseCsvFunc(colTypes, fieldDelim, quoteChar, skipBlankLine, lenient));

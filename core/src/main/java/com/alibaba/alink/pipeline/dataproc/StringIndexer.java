@@ -2,6 +2,8 @@ package com.alibaba.alink.pipeline.dataproc;
 
 import org.apache.flink.ml.api.misc.param.Params;
 
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.NameEn;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.operator.batch.dataproc.StringIndexerTrainBatchOp;
 import com.alibaba.alink.params.dataproc.StringIndexerPredictParams;
@@ -22,6 +24,8 @@ import com.alibaba.alink.pipeline.Trainer;
  * <li>alphabet_desc</li>
  * </ol>
  */
+@NameEn("String Indexer")
+@NameCn("字符串编码")
 public class StringIndexer extends Trainer <StringIndexer, StringIndexerModel> implements
 	StringIndexerTrainParams <StringIndexer>,
 	StringIndexerPredictParams <StringIndexer> {

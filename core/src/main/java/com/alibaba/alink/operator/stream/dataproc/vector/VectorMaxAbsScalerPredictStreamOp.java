@@ -2,7 +2,9 @@ package com.alibaba.alink.operator.stream.dataproc.vector;
 
 import org.apache.flink.ml.api.misc.param.Params;
 
+import com.alibaba.alink.common.annotation.NameCn;
 import com.alibaba.alink.operator.batch.BatchOperator;
+import com.alibaba.alink.operator.common.dataproc.vector.VectorImputerModelMapper;
 import com.alibaba.alink.operator.common.dataproc.vector.VectorMaxAbsScalerModelMapper;
 import com.alibaba.alink.operator.stream.utils.ModelMapStreamOp;
 import com.alibaba.alink.params.dataproc.vector.VectorMaxAbsScalerPredictParams;
@@ -12,10 +14,19 @@ import com.alibaba.alink.params.dataproc.vector.VectorMaxAbsScalerPredictParams;
  * [-1, 1] by dividing through the maximum absolute value in each feature.
  * MaxAbsPredict will scale the dataset with model which trained from MaxAbsTrain.
  */
+@NameCn("向量绝对值最大化预测")
 public class VectorMaxAbsScalerPredictStreamOp extends ModelMapStreamOp <VectorMaxAbsScalerPredictStreamOp>
 	implements VectorMaxAbsScalerPredictParams <VectorMaxAbsScalerPredictStreamOp> {
 
 	private static final long serialVersionUID = 1839539414612336143L;
+
+	public VectorMaxAbsScalerPredictStreamOp() {
+		super(VectorMaxAbsScalerModelMapper::new, new Params());
+	}
+
+	public VectorMaxAbsScalerPredictStreamOp(Params params) {
+		super(VectorMaxAbsScalerModelMapper::new, params);
+	}
 
 	public VectorMaxAbsScalerPredictStreamOp(BatchOperator model) {
 		this(model, new Params());

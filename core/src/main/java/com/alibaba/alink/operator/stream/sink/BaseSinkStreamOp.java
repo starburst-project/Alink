@@ -10,6 +10,12 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
 import com.alibaba.alink.common.MLEnvironmentFactory;
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkIllegalOperationException;
 import com.alibaba.alink.common.io.annotations.IOType;
 import com.alibaba.alink.operator.stream.StreamOperator;
 import com.alibaba.alink.operator.stream.utils.MTableSerializeStreamOp;
@@ -23,6 +29,9 @@ import com.alibaba.alink.params.io.HasIoType;
  *
  * @param <T>
  */
+@InputPorts(values = {@PortSpec(PortType.ANY)})
+@OutputPorts()
+@NameCn("")
 public abstract class BaseSinkStreamOp<T extends BaseSinkStreamOp <T>> extends StreamOperator <T> {
 
 	static final IOType IO_TYPE = IOType.SinkStream;
@@ -30,7 +39,7 @@ public abstract class BaseSinkStreamOp<T extends BaseSinkStreamOp <T>> extends S
 
 	protected BaseSinkStreamOp(String nameSrcSnk, Params params) {
 		super(params);
-		this.getParams().set(HasIoType.IO_TYPE, IO_TYPE)
+		getParams().set(HasIoType.IO_TYPE, IO_TYPE)
 			.set(HasIoName.IO_NAME, nameSrcSnk);
 	}
 
@@ -48,12 +57,12 @@ public abstract class BaseSinkStreamOp<T extends BaseSinkStreamOp <T>> extends S
 
 	@Override
 	public final Table getOutputTable() {
-		throw new RuntimeException("Sink Operator has no output data.");
+		throw new AkIllegalOperationException("Sink Operator has no output data.");
 	}
 
 	@Override
 	public final StreamOperator <?> getSideOutput(int idx) {
-		throw new RuntimeException("Sink Operator has no side-output data.");
+		throw new AkIllegalOperationException("Sink Operator has no side-output data.");
 	}
 
 	@Override
@@ -76,7 +85,7 @@ public abstract class BaseSinkStreamOp<T extends BaseSinkStreamOp <T>> extends S
 				private static final long serialVersionUID = -335704052194502150L;
 
 				@Override
-				public void flatMap(Tuple2 <Boolean, Row> tuple2, Collector <Row> collector) throws Exception {
+				public void flatMap(Tuple2 <Boolean, Row> tuple2, Collector <Row> collector) {
 					if (tuple2.f0) {
 						collector.collect(tuple2.f1);
 					}

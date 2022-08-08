@@ -25,18 +25,18 @@ Jaccard 支持相似度计算，应选择metric的参数为JACCARD_SIM。
 Alink上字符相似度算法包括Batch组件和Stream组件。
 
 ## 参数说明
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| outputCol | 输出结果列列名 | 输出结果列列名，必选 | String | ✓ |  |
-| selectedCols | 选择的列名 | 计算列对应的列名列表 | String[] | ✓ |  |
-| metric | 度量类型 | 计算距离时，可以取不同的度量 | String |  | "LEVENSHTEIN_SIM" |
-| numBucket | 分桶个数 | 分桶个数 | Integer |  | 10 |
-| numHashTables | 哈希表个数 | 哈希表的数目 | Integer |  | 10 |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| seed | 采样种子 | 采样种子 | Long |  | 0 |
-| windowSize | 窗口大小 | 窗口大小 | Integer |  | 2 |
-| lambda | 匹配字符权重 | 匹配字符权重，SSK中使用 | Double |  | 0.5 |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| outputCol | 输出结果列列名 | 输出结果列列名，必选 | String | ✓ |  |  |
+| selectedCols | 选择的列名 | 计算列对应的列名列表 | String[] | ✓ | 所选列类型为 [STRING] |  |
+| lambda | 匹配字符权重 | 匹配字符权重，SSK中使用 | Double |  |  | 0.5 |
+| metric | 度量类型 | 计算距离时，可以取不同的度量 | String |  | "LEVENSHTEIN", "LEVENSHTEIN_SIM", "LCS", "LCS_SIM", "SSK", "COSINE", "SIMHASH_HAMMING", "SIMHASH_HAMMING_SIM", "JACCARD_SIM" | "LEVENSHTEIN_SIM" |
+| numBucket | 分桶个数 | 分桶个数 | Integer |  |  | 10 |
+| numHashTables | 哈希表个数 | 哈希表的数目 | Integer |  |  | 10 |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| seed | 采样种子 | 采样种子 | Long |  |  | 0 |
+| windowSize | 窗口大小 | 窗口大小 | Integer |  | [1, +inf) | 2 |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 
@@ -60,10 +60,10 @@ df = pd.DataFrame([
 inOp1 = BatchOperator.fromDataframe(df, schemaStr='id long, text1 string, text2 string')
 inOp2 = StreamOperator.fromDataframe(df, schemaStr='id long, text1 string, text2 string')
 
-batchOp = StringSimilarityPairwiseBatchOp().setSelectedCols(["text1", "text2"]).setMetric("LEVENSHTEIN").setOutputCol("output")
+batchOp = StringSimilarityPairwiseBatchOp().setSelectedCols(["text1", "text2"]).setMetric("LEVENSHTEIN").setOutputCol("LEVENSHTEIN")
 batchOp.linkFrom(inOp1).print()
 
-streamOp = StringSimilarityPairwiseStreamOp().setSelectedCols(["text1", "text2"]).setMetric("COSINE").setOutputCol("output")
+streamOp = StringSimilarityPairwiseStreamOp().setSelectedCols(["text1", "text2"]).setMetric("COSINE").setOutputCol("COSINE")
 streamOp.linkFrom(inOp2).print()
 StreamOperator.execute()
 ```
@@ -95,23 +95,28 @@ public class StringSimilarityPairwiseBatchOpTest {
 		BatchOperator <?> inOp1 = new MemSourceBatchOp(df, "id int, text1 string, text2 string");
 		StreamOperator <?> inOp2 = new MemSourceStreamOp(df, "id int, text1 string, text2 string");
 		BatchOperator <?> batchOp = new StringSimilarityPairwiseBatchOp().setSelectedCols("text1", "text2").setMetric(
-			"LEVENSHTEIN").setOutputCol("output");
+			"LEVENSHTEIN").setOutputCol("LEVENSHTEIN");
 		batchOp.linkFrom(inOp1).print();
 		StreamOperator <?> streamOp = new StringSimilarityPairwiseStreamOp().setSelectedCols("text1", "text2")
-			.setMetric("COSINE").setOutputCol("output");
+			.setMetric("COSINE").setOutputCol("COSINE");
 		streamOp.linkFrom(inOp2).print();
 		StreamOperator.execute();
 	}
 }
 ```
 ### 运行结果
-id|text1|text2|output
----|-----|-----|------
+id|text1|text2|LEVENSHTEIN
+---|-----|-----|-----------
 0|abcde|aabce|2.0000
 1|aacedw|aabbed|3.0000
 2|cdefa|bbcefa|3.0000
 3|bdefh|ddeac|3.0000
 4|acedm|aeefbc|4.0000
 
-
-
+id|text1|text2|COSINE
+---|-----|-----|------
+1|aacedw|aabbed|0.4000
+4|acedm|aeefbc|0.0000
+0|abcde|aabce|0.5000
+2|cdefa|bbcefa|0.4472
+3|bdefh|ddeac|0.2500

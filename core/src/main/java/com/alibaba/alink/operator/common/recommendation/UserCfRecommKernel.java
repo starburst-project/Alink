@@ -5,6 +5,8 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
 import com.alibaba.alink.common.MTable;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
+import com.alibaba.alink.operator.common.io.types.FlinkTypeConverter;
 import com.alibaba.alink.params.recommendation.BaseItemsPerUserRecommParams;
 import com.alibaba.alink.params.recommendation.BaseSimilarItemsRecommParams;
 import com.alibaba.alink.params.recommendation.BaseUsersPerItemRecommParams;
@@ -25,25 +27,22 @@ public class UserCfRecommKernel extends RecommKernel implements Cloneable {
 		switch (recommType) {
 			case SIMILAR_USERS: {
 				this.topN = this.params.get(BaseSimilarItemsRecommParams.K);
-				this.recommObjType = modelSchema.getFieldTypes()[1];
 				break;
 			}
 			case USERS_PER_ITEM: {
 				this.topN = this.params.get(BaseUsersPerItemRecommParams.K);
 				this.excludeKnown = this.params.get(BaseUsersPerItemRecommParams.EXCLUDE_KNOWN);
-				this.recommObjType = modelSchema.getFieldTypes()[1];
 				break;
 			}
 			case ITEMS_PER_USER: {
 				this.topN = this.params.get(BaseItemsPerUserRecommParams.K);
-				this.recommObjType = modelSchema.getFieldTypes()[2];
 				break;
 			}
 			case RATE: {
 				break;
 			}
 			default: {
-				throw new RuntimeException("UserCf not support " + recommType + " yet!");
+				throw new AkUnsupportedOperationException("UserCf not support " + recommType + " yet!");
 			}
 		}
 	}
@@ -68,6 +67,20 @@ public class UserCfRecommKernel extends RecommKernel implements Cloneable {
 				-> new ItemCfRecommModelDataConverter(recommType).load(modelRows));
 		}
 		scores = ThreadLocal.withInitial(() -> new double[model.get().items.length]);
+		switch (recommType) {
+			case ITEMS_PER_USER:
+			case SIMILAR_ITEMS: {
+				recommObjType = FlinkTypeConverter.getFlinkType(
+					model.get().meta.get(ItemCfRecommModelDataConverter.USER_TYPE));
+				break;
+			}
+			case SIMILAR_USERS:
+			case USERS_PER_ITEM: {
+				recommObjType = FlinkTypeConverter.getFlinkType(
+					model.get().meta.get(ItemCfRecommModelDataConverter.ITEM_TYPE));
+			}
+		}
+
 	}
 
 	@Override
@@ -90,11 +103,16 @@ public class UserCfRecommKernel extends RecommKernel implements Cloneable {
 
 	@Override
 	public MTable recommendSimilarItems(Object itemId) {
-		throw new RuntimeException("ItemCf not support recommendSimilarItems");
+		throw new AkUnsupportedOperationException("ItemCf not support recommendSimilarItems");
 	}
 
 	@Override
 	public MTable recommendSimilarUsers(Object userId) {
 		return ItemCfRecommKernel.findSimilarItems(userId, model.get(), topN, userColName, recommObjType);
+	}
+
+	@Override
+	public RecommKernel createNew() {
+		return new UserCfRecommKernel(getModelSchema(), getDataSchema(), params.clone(), recommType);
 	}
 }

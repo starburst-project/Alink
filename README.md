@@ -22,7 +22,8 @@
 - 源代码地址：https://github.com/alibaba/Alink/tree/master/tutorial
 - Java版的数据和资料链接：https://www.yuque.com/pinshu/alink_tutorial/book_java_reference
 - Python版的数据和资料链接：https://www.yuque.com/pinshu/alink_tutorial/book_python_reference
-- 下载部分示例数据的Java代码：https://www.yuque.com/pinshu/alink_tutorial/book_java_download_some_data
+- Alink教程(Java版)代码的运行攻略：https://www.yuque.com/pinshu/alink_tutorial/book_java_code_help
+- Alink教程(Python版)代码的运行攻略：https://www.yuque.com/pinshu/alink_tutorial/book_python_code_help
 
 #### 开源算法列表
 
@@ -47,7 +48,7 @@
 
   - PyAlink 根据 Alink 所支持的 Flink 版本提供不同的 Python 包：
 其中，`pyalink` 包对应为 Alink 所支持的最新 Flink 版本，当前为 1.13，而 `pyalink-flink-***` 为旧版本的 Flink 版本，当前提供 `pyalink-flink-1.12`, `pyalink-flink-1.11`, `pyalink-flink-1.10` 和 `pyalink-flink-1.9`。
-  - Python 包的版本号与 Alink 的版本号一致，例如`1.5.2`。
+  - Python 包的版本号与 Alink 的版本号一致，例如`1.5.7`。
 
 ####安装步骤：
 1. 确保使用环境中有Python3，版本限于 3.6，3.7 和 3.8。
@@ -60,33 +61,12 @@
 1. `pyalink` 和 `pyalink-flink-***` 不能同时安装，也不能与旧版本同时安装。
 如果之前安装过 `pyalink` 或者 `pyalink-flink-***`，请使用`pip uninstall pyalink` 或者 `pip uninstall pyalink-flink-***` 卸载之前的版本。
 2. 出现`pip`安装缓慢或不成功的情况，可以参考[这篇文章](https://segmentfault.com/a/1190000006111096)修改pip源，或者直接使用下面的链接下载 whl 包，然后使用 `pip` 安装：
-   - Flink 1.13：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.2/pyalink-1.5.2-py3-none-any.whl) (MD5: b1cde03e1ead3d8f692aa46aa927bf7d)
-   - Flink 1.12：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.2/pyalink_flink_1.12-1.5.2-py3-none-any.whl) (MD5: 3f897a29e71b89c5f01405c14f443067)
-   - Flink 1.11：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.2/pyalink_flink_1.11-1.5.2-py3-none-any.whl) (MD5: aef090adbe1972a6b422dbb6e46b23a1)
-   - Flink 1.10：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.2/pyalink_flink_1.10-1.5.2-py3-none-any.whl) (MD5: 26ec8cc890dfecd30e48696509b9a015)
-   - Flink 1.9: [链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.2/pyalink_flink_1.9-1.5.2-py3-none-any.whl) (MD5: f961183713b9ffa419f8868e3e73fff9)
+   - Flink 1.13：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.7/pyalink-1.5.7-py3-none-any.whl) (MD5: 75013a0e512e9e11cc0ca3502737021b)
+   - Flink 1.12：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.7/pyalink_flink_1.12-1.5.7-py3-none-any.whl) (MD5: 958221a941faa806dee31091043ecfab)
+   - Flink 1.11：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.7/pyalink_flink_1.11-1.5.7-py3-none-any.whl) (MD5: 96c2f78005708a0c645cd921cc41f05f)
+   - Flink 1.10：[链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.7/pyalink_flink_1.10-1.5.7-py3-none-any.whl) (MD5: 7fe7765c307d91dc7296baf886ab79cb)
+   - Flink 1.9: [链接](https://alink-release.oss-cn-beijing.aliyuncs.com/v1.5.7/pyalink_flink_1.9-1.5.7-py3-none-any.whl) (MD5: 07d462b66159142b0342a61be9c5462b)
 3. 如果有多个版本的 Python，可能需要使用特定版本的 `pip`，比如 `pip3`；如果使用 Anaconda，则需要在 Anaconda 命令行中进行安装。
-
-#### 下载安装文件系统或 Catalog 依赖 jar 包：
-
-安装 PyAlink 之后，可以直接运行 ```download_pyalink_dep_jars``` 命令，下载支持文件系统功能所需要的 jar 包。
-（如果提示找不到这个命令，可以尝试直接运行脚本： ```python3 -c 'from pyalink.alink.download_pyalink_dep_jars import main;main()'```。）
-
-运行这个命令后，将提问是否安装某种文件系统对应的 jar 包，并选择合适的版本。 当前支持的文件系统包括：
- 
-- OSS：3.4.1
-- Hadoop：2.8.3
-- Hive：2.3.4
-- MySQL: 5.1.27
-- Derby: 10.6.1.0
-- SQLite: 3.19.3
-- S3-hadoop: 1.11.788
-- S3-presto: 1.11.788
-- odps: 0.36.4-public
-
-这些 jar 包将被下载到 PyAlink 安装路径的 ```lib/plugins``` 目录下，所以要求运行命令时有 PyAlink 安装目录的权限。
-
-运行命令时，也可以增加参数：```download_pyalink_dep_jars -d```，将自动下载所有的 jar 包。
 
 ### 开始使用：
 -------
@@ -159,7 +139,7 @@ pipeline.fit(data).transform(data).print();
 <dependency>
     <groupId>com.alibaba.alink</groupId>
     <artifactId>alink_core_flink-1.13_2.11</artifactId>
-    <version>1.5.2</version>
+    <version>1.5.7</version>
 </dependency>
 <dependency>
     <groupId>org.apache.flink</groupId>
@@ -183,7 +163,7 @@ pipeline.fit(data).transform(data).print();
 <dependency>
     <groupId>com.alibaba.alink</groupId>
     <artifactId>alink_core_flink-1.12_2.11</artifactId>
-    <version>1.5.2</version>
+    <version>1.5.7</version>
 </dependency>
 <dependency>
     <groupId>org.apache.flink</groupId>
@@ -207,7 +187,7 @@ pipeline.fit(data).transform(data).print();
 <dependency>
     <groupId>com.alibaba.alink</groupId>
     <artifactId>alink_core_flink-1.11_2.11</artifactId>
-    <version>1.5.2</version>
+    <version>1.5.7</version>
 </dependency>
 <dependency>
     <groupId>org.apache.flink</groupId>
@@ -231,7 +211,7 @@ pipeline.fit(data).transform(data).print();
 <dependency>
     <groupId>com.alibaba.alink</groupId>
     <artifactId>alink_core_flink-1.10_2.11</artifactId>
-    <version>1.5.2</version>
+    <version>1.5.7</version>
 </dependency>
 <dependency>
     <groupId>org.apache.flink</groupId>
@@ -251,7 +231,7 @@ pipeline.fit(data).transform(data).print();
 <dependency>
     <groupId>com.alibaba.alink</groupId>
     <artifactId>alink_core_flink-1.9_2.11</artifactId>
-    <version>1.5.2</version>
+    <version>1.5.7</version>
 </dependency>
 <dependency>
     <groupId>org.apache.flink</groupId>

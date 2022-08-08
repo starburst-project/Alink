@@ -5,15 +5,31 @@ Python 类名：ProphetTrainBatchOp
 
 
 ## 功能介绍
-使用Prophet进行时间序列训练和预测。
+进行Prophet训练，得到Prophet模型，可以用来做预测。
+
+### 算法原理
+
+Prophet是facebook开源的一个时间序列预测算法, github地址：https://github.com/facebook/prophet.
+
+Prophet适用于具有明显的内在规律的数据, 例如：
+
+* 有一定的历史数据，有至少几个月的每小时、每天或每周观察的历史数据
+* 有较强的季节性趋势：每周的一些天，每年的一些时间
+* 有已知的以不定期的间隔发生的重要节假日（比如国庆节）
+* 缺失的历史数据或较大的异常数据的数量在合理范围内
+* 对于数据中蕴含的非线性增长的趋势都有一个自然极限或饱和状态
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| timeCol | 时间戳列(TimeStamp) | 时间戳列(TimeStamp) | String | ✓ |  |
-| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ |  |
-| pythonEnv | Python 环境路径 | Python 环境路径，一般情况下不需要填写。如果是压缩文件，需要解压后得到一个目录，且目录名与压缩文件主文件名一致，可以使用 http://, https://, oss://, hdfs:// 等路径；如果是目录，那么只能使用本地路径，即 file://。 | String |  | "" |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| timeCol | 时间戳列(TimeStamp) | 时间戳列(TimeStamp) | String | ✓ | 所选列类型为 [TIMESTAMP] |  |
+| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ | 所选列类型为 [BIGDECIMAL, BIGINTEGER, BYTE, DOUBLE, FLOAT, INTEGER, LONG, SHORT] |  |
+| pythonEnv | Python 环境路径 | Python 环境路径，一般情况下不需要填写。如果是压缩文件，需要解压后得到一个目录，且目录名与压缩文件主文件名一致，可以使用 http://, https://, oss://, hdfs:// 等路径；如果是目录，那么只能使用本地路径，即 file://。 | String |  |  | "" |
 
 ## 代码示例
 ### Python 代码

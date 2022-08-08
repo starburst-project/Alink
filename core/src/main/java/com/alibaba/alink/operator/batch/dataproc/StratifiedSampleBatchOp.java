@@ -8,8 +8,15 @@ import org.apache.flink.api.java.sampling.RandomSampler;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkIllegalArgumentException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
 import com.alibaba.alink.params.dataproc.HashWithReplacementParams;
@@ -22,6 +29,11 @@ import java.util.Map;
 /**
  * StratifiedSample with given ratio with/without replacement.
  */
+
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = @PortSpec(PortType.DATA))
+@ParamSelectColumnSpec(name = "strataCol", portIndices = 0)
+@NameCn("分层随机采样")
 public final class StratifiedSampleBatchOp extends BatchOperator <StratifiedSampleBatchOp>
 	implements StratifiedSampleParams <StratifiedSampleBatchOp>, HashWithReplacementParams <StratifiedSampleBatchOp> {
 
@@ -68,15 +80,15 @@ public final class StratifiedSampleBatchOp extends BatchOperator <StratifiedSamp
 			for (String keyRatio : keyRatios) {
 				String[] ratioArray = keyRatio.split(":");
 				Double groupRatio = new Double(ratioArray[1]);
-				Preconditions.checkArgument(groupRatio >= 0.0 && groupRatio <= 1.0,
-					"Ratio must be in range [0, 1].");
+				AkPreconditions.checkArgument(groupRatio >= 0.0 && groupRatio <= 1.0,
+					new AkIllegalArgumentException("Ratio must be in range [0, 1]."));
 				fractionMap.put(ratioArray[0], groupRatio);
 			}
 
 		}
 
 		@Override
-		public void reduce(Iterable <T> values, Collector <T> out) throws Exception {
+		public void reduce(Iterable <T> values, Collector <T> out) {
 			GetFirstIterator iterator = new GetFirstIterator(values.iterator());
 			Double fraction = sampleRatio;
 			if (null == fraction || fraction < 0) {
@@ -84,7 +96,7 @@ public final class StratifiedSampleBatchOp extends BatchOperator <StratifiedSamp
 				if (null != first) {
 					Object key = first.getField(index);
 					fraction = fractionMap.get(String.valueOf(key));
-					Preconditions.checkNotNull(fraction, key + " is not contained in map!");
+					AkPreconditions.checkNotNull(fraction, key + " is not contained in map!");
 				} else {
 					return;
 				}

@@ -17,8 +17,16 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
 import com.alibaba.alink.common.comqueue.IterativeComQueue;
 import com.alibaba.alink.common.comqueue.communication.AllReduce;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.lazy.WithModelInfoBatchOp;
 import com.alibaba.alink.common.linalg.DenseMatrix;
 import com.alibaba.alink.common.linalg.SparseVector;
@@ -48,7 +56,6 @@ import com.alibaba.alink.operator.common.statistics.StatisticsHelper;
 import com.alibaba.alink.operator.common.statistics.basicstatistic.BaseVectorSummary;
 import com.alibaba.alink.params.clustering.LdaTrainParams;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.math3.random.RandomDataGenerator;
 
 import java.util.ArrayList;
@@ -66,6 +73,14 @@ import static org.apache.flink.shaded.guava18.com.google.common.hash.Hashing.mur
  * This algorithm can also generate the probability that each word belongs to each topic and the
  * perplexity which can evaluate the fitting effect of this algorithm.
  */
+@InputPorts(values = {@PortSpec(PortType.DATA)})
+@OutputPorts(values = {
+	@PortSpec(value = PortType.MODEL),
+	@PortSpec(value = PortType.DATA),
+	@PortSpec(value = PortType.DATA)
+})
+@ParamSelectColumnSpec(name = "selectedCol", allowedTypeCollections = TypeCollections.VECTOR_TYPES)
+@NameCn("LDA训练")
 public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 	implements LdaTrainParams <LdaTrainBatchOp>,
 	WithModelInfoBatchOp <LdaModelInfo, LdaTrainBatchOp, LdaModelInfoBatchOp> {
@@ -132,8 +147,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 				private static final long serialVersionUID = -550512476573928350L;
 
 				@Override
-				public void mapPartition(Iterable <Tuple2 <Long, Vector>> values, Collector <Vector> out)
-					throws Exception {
+				public void mapPartition(Iterable <Tuple2 <Long, Vector>> values, Collector <Vector> out) {
 					List <Tuple2 <Long, Vector>> listValues = Lists.newArrayList(values);
 					listValues.sort(new Comparator <Tuple2 <Long, Vector>>() {
 						@Override
@@ -162,7 +176,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 				online(dataAndStat, numTopic, numIter, alpha, beta, resDocCountModel, gammaShape, seed);
 				break;
 			default:
-				throw new NotImplementedException("Optimizer not support.");
+				throw new AkUnsupportedOperationException("Optimizer[" + optimizer +  "] not supported.");
 		}
 		return this;
 	}
@@ -305,7 +319,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		}
 
 		@Override
-		public Tuple2 <Long, Vector> map(Vector value) throws Exception {
+		public Tuple2 <Long, Vector> map(Vector value) {
 			Long hashValue = hashFunc.hashUnencodedChars(value.toString()).asLong();
 			return Tuple2.of(hashValue, value);
 		}
@@ -330,7 +344,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		}
 
 		@Override
-		public void open(Configuration parameters) throws Exception {
+		public void open(Configuration parameters) {
 			List <Tuple2 <Long, Integer>> tuple2 = this.getRuntimeContext().getBroadcastVariable(LdaVariable.shape);
 			vocabularySize = tuple2.get(0).f1;
 		}
@@ -374,7 +388,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		}
 
 		@Override
-		public void flatMap(Row value, Collector <Row> res) throws Exception {
+		public void flatMap(Row value, Collector <Row> res) {
 			LdaModelData modelData = (LdaModelData) value.getField(0);
 			modelData.seed = seed;
 			modelData.list = docCountModelData.list;
@@ -414,7 +428,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		}
 
 		@Override
-		public void flatMap(Row value, Collector <Row> out) throws Exception {
+		public void flatMap(Row value, Collector <Row> out) {
 			SparseVector sv = DocCountVectorizerModelMapper.predictSparseVector((String) value.getField(index),
 				minTF, wordIdWeight, featureType, featureNum);
 			if (sv.getIndices() != null && sv.getIndices().length != 0) {
@@ -432,7 +446,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		private static final long serialVersionUID = -5305654619082861506L;
 
 		@Override
-		public void mapPartition(Iterable <Row> values, Collector <Row> out) throws Exception {
+		public void mapPartition(Iterable <Row> values, Collector <Row> out) {
 			List <Row> rows = new ArrayList <>();
 			for (Row row : values) {
 				rows.add(row);
@@ -458,7 +472,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		private static final long serialVersionUID = 6572052177423807502L;
 
 		@Override
-		public void mapPartition(Iterable <Row> values, Collector <Row> out) throws Exception {
+		public void mapPartition(Iterable <Row> values, Collector <Row> out) {
 			List <Row> rows = new ArrayList <>();
 			for (Row row : values) {
 				rows.add(row);
@@ -487,7 +501,7 @@ public class LdaTrainBatchOp extends BatchOperator <LdaTrainBatchOp>
 		private static final long serialVersionUID = 859887532899418780L;
 
 		@Override
-		public void mapPartition(Iterable <Row> values, Collector <Row> out) throws Exception {
+		public void mapPartition(Iterable <Row> values, Collector <Row> out) {
 			List <Row> rows = new ArrayList <>();
 			for (Row row : values) {
 				rows.add(row);

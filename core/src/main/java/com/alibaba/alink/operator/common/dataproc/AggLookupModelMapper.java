@@ -6,7 +6,8 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.MatVecOp;
 import com.alibaba.alink.common.linalg.VectorUtil;
@@ -91,7 +92,7 @@ public class AggLookupModelMapper extends ModelMapper {
 									dvec.plusScaleEqual(t, 1.0);
 									break;
 								default:
-									throw new RuntimeException("not support yet.");
+									throw new AkUnsupportedOperationException("not support yet.");
 							}
 
 						} else {
@@ -127,7 +128,7 @@ public class AggLookupModelMapper extends ModelMapper {
 			this.operators[i] = featureClauses[i].op;
 			selectedCols[i] = featureClauses[i].inColName;
 			outputCols[i] = featureClauses[i].outColName;
-			outputTypes[i] = VectorTypes.DENSE_VECTOR;
+			outputTypes[i] = AlinkTypes.DENSE_VECTOR;
 			sequenceLens[i] = (featureClauses[i].inputParams.length == 1)
 				? Integer.parseInt(featureClauses[i].inputParams[0].toString()) : -1;
 		}
@@ -154,7 +155,6 @@ public class AggLookupModelMapper extends ModelMapper {
 			new AggLookupModelMapper(this.getModelSchema(), this.getDataSchema(), this.params);
 		mapper.embed = this.embed;
 		mapper.loadModel(modelRows);
-
-		return this;
+		return mapper;
 	}
 }

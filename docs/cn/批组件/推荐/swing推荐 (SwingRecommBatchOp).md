@@ -5,18 +5,20 @@ Python 类名：SwingRecommBatchOp
 
 
 ## 功能介绍
-Swing 是一种被广泛使用的item召回算法
+Swing 是一种被广泛使用的item召回算法，算法详细介绍可以参考SwingTrainBatchOp组件。
+
+该组件为Swing的批处理预测组件，输入为 SwingTrainBatchOp 输出的模型和要预测的item列。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| itemCol | Item列列名 | Item列列名 | String | ✓ |  |
-| recommCol | 推荐结果列名 | 推荐结果列名 | String | ✓ |  |
-| initRecommCol | 初始推荐列列名 | 初始推荐列列名 | String |  | null |
-| k | 推荐TOP数量 | 推荐TOP数量 | Integer |  | 10 |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| itemCol | Item列列名 | Item列列名 | String | ✓ |  |  |
+| recommCol | 推荐结果列名 | 推荐结果列名 | String | ✓ |  |  |
+| initRecommCol | 初始推荐列列名 | 初始推荐列列名 | String |  | 所选列类型为 [M_TABLE] | null |
+| k | 推荐TOP数量 | 推荐TOP数量 | Integer |  |  | 10 |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码
@@ -47,11 +49,11 @@ data = BatchOperator.fromDataframe(df_data, schemaStr='user string, item string,
 model = SwingTrainBatchOp()\
     .setUserCol("user")\
     .setItemCol("item")\
-    .setRateCol("rating").linkFrom(data);
+    .linkFrom(data)
 
 predictor = SwingRecommBatchOp()\
     .setItemCol("item")\
-    .setRecommCol("prediction_result");
+    .setRecommCol("prediction_result")
 
 predictor.linkFrom(model, data).print()
 ```
@@ -89,7 +91,7 @@ public class SwingRecommBatchOpTest {
 		BatchOperator <?> model = new SwingTrainBatchOp()
 			.setUserCol("user")
 			.setItemCol("item")
-			.setRateCol("rating").linkFrom(data);
+			.linkFrom(data);
 		BatchOperator <?> predictor = new SwingRecommBatchOp()
 			.setItemCol("item")
 			.setRecommCol("prediction_result");

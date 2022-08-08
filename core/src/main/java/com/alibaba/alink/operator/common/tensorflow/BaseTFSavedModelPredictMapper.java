@@ -4,15 +4,15 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.util.Preconditions;
 
 import com.alibaba.alink.common.dl.plugin.DLPredictorService;
 import com.alibaba.alink.common.dl.plugin.TFPredictorClassLoaderFactory;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
 import com.alibaba.alink.common.mapper.Mapper;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
-import com.alibaba.alink.params.dl.HasIntraOpParallelism;
+import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.params.dl.HasModelPath;
-import com.alibaba.alink.params.shared.colname.HasReservedColsDefaultAsNull;
 import com.alibaba.alink.params.tensorflow.savedmodel.BaseTFSavedModelPredictParams;
 
 import java.io.Serializable;
@@ -76,10 +76,10 @@ public class BaseTFSavedModelPredictMapper extends Mapper implements Serializabl
 			inputSignatureDefs = tfInputCols;
 		}
 
-		Preconditions.checkArgument(params.contains(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR),
-			"Must set outputSchemaStr.");
+		AkPreconditions.checkArgument(params.contains(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR),
+			new AkIllegalOperatorParameterException("Must set outputSchemaStr."));
 		String tfOutputSchemaStr = params.get(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR);
-		TableSchema tfOutputSchema = CsvUtil.schemaStr2Schema(tfOutputSchemaStr);
+		TableSchema tfOutputSchema = TableUtil.schemaStr2Schema(tfOutputSchemaStr);
 		tfOutputCols = tfOutputSchema.getFieldNames();
 		outputSignatureDefs = params.get(BaseTFSavedModelPredictParams.OUTPUT_SIGNATURE_DEFS);
 		if (null == outputSignatureDefs) {
@@ -102,8 +102,8 @@ public class BaseTFSavedModelPredictMapper extends Mapper implements Serializabl
 
 	protected Map <String, Object> getPredictorConfig() {
 		Map <String, Object> config = new HashMap <>();
-		Integer intraOpParallelism = params.contains(HasIntraOpParallelism.INTRA_OP_PARALLELISM)
-			? params.get(HasIntraOpParallelism.INTRA_OP_PARALLELISM)
+		Integer intraOpParallelism = params.contains(BaseTFSavedModelPredictParams.INTRA_OP_PARALLELISM)
+			? params.get(BaseTFSavedModelPredictParams.INTRA_OP_PARALLELISM)
 			: null;
 		config.put(MODEL_PATH_KEY, modelPath);
 		config.put(GRAPH_DEF_TAG_KEY, graphDefTag);
@@ -118,7 +118,7 @@ public class BaseTFSavedModelPredictMapper extends Mapper implements Serializabl
 
 	@Override
 	public void open() {
-		Preconditions.checkArgument(modelPath != null, "Model path is not set.");
+		AkPreconditions.checkArgument(modelPath != null, "Model path is not set.");
 		predictor = TFPredictorClassLoaderFactory.create(factory);
 		predictor.open(getPredictorConfig());
 	}
@@ -128,7 +128,7 @@ public class BaseTFSavedModelPredictMapper extends Mapper implements Serializabl
 		try {
 			predictor.close();
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to close predictor", e);
+			throw new AkUnclassifiedErrorException("Failed to close predictor", e);
 		}
 	}
 
@@ -140,8 +140,8 @@ public class BaseTFSavedModelPredictMapper extends Mapper implements Serializabl
 			tfInputCols = dataSchema.getFieldNames();
 		}
 		String tfOutputSchemaStr = params.get(BaseTFSavedModelPredictParams.OUTPUT_SCHEMA_STR);
-		TableSchema tfOutputSchema = CsvUtil.schemaStr2Schema(tfOutputSchemaStr);
-		String[] reservedCols = params.get(HasReservedColsDefaultAsNull.RESERVED_COLS);
+		TableSchema tfOutputSchema = TableUtil.schemaStr2Schema(tfOutputSchemaStr);
+		String[] reservedCols = params.get(BaseTFSavedModelPredictParams.RESERVED_COLS);
 		return Tuple4.of(tfInputCols,
 			tfOutputSchema.getFieldNames(),
 			tfOutputSchema.getFieldTypes(),

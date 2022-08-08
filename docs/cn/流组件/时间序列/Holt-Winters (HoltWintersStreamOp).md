@@ -5,28 +5,58 @@ Python 类名：HoltWintersStreamOp
 
 
 ## 功能介绍
-使用HoltWinters进行时间序列预测。
+给定分组，对每一组的数据使用HoltWinters进行时间序列预测。
+
+### 使用方式
+
+参考文档 https://www.yuque.com/pinshu/alink_guide/xbp5ky
+
+### 算法原理
+
+HoltWinters由Holt和Winters提出的三次指数平滑算法，又称holt-winters,
+
+HoltWinters 详细介绍请见链接 https://en.wikipedia.org/wiki/Exponential_smoothing
+
+holt-winters支持2种季节类型： additive 和 multiplicative
+
+* additive seasonal holt-winters
+
+![image](https://zos.alipayobjects.com/rmsportal/vUIABTTfaEbfBYeuiuYx.png)
+
+* multiplicative seasonal holt_winters
+
+![image](https://zos.alipayobjects.com/rmsportal/iuSBCUXsZuexJJgmwqsT.png)
+
+* 其中，
+
+    * smoothValue（l、b、s）分别表示level，trend，seasonal
+
+    * smoothParameter(α、β、γ)分别表示alpha，beta，gamma
+
+    * t表示当前时刻，h表示要预测h步
+
+    * p表示period或frequency，时间序列的周期
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ |  |
-| alpha | alpha | alpha | Double |  | 0.3 |
-| beta | beta | beta | Double |  | 0.1 |
-| doSeasonal | 时间是否具有季节性 | 时间是否具有季节性 | Boolean |  | false |
-| doTrend | 时间是否具有趋势性 | 时间是否具有趋势性 | Boolean |  | false |
-| frequency | 时序频率 | 时序频率 | Integer |  | 10 |
-| gamma | gamma | gamma | Double |  | 0.1 |
-| levelStart | level初始值 | level初始值 | Double |  |  |
-| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| seasonalStart | seasonal初始值 | seasonal初始值 | double[] |  |  |
-| seasonalType | 季节类型 | 季节类型 | String |  | "ADDITIVE" |
-| trendStart | trend初始值 | trend初始值 | Double |  |  |
-| predictNum | 预测条数 | 预测条数 | Integer |  | 1 |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| valueCol | value列，类型为MTable | value列，类型为MTable | String | ✓ | 所选列类型为 [M_TABLE] |  |
+| alpha | alpha | alpha | Double |  | [0.0, 1.0] | 0.3 |
+| beta | beta | beta | Double |  | [0.0, 1.0] | 0.1 |
+| doSeasonal | 时间是否具有季节性 | 时间是否具有季节性 | Boolean |  |  | false |
+| doTrend | 时间是否具有趋势性 | 时间是否具有趋势性 | Boolean |  |  | false |
+| frequency | 时序频率 | 时序频率 | Integer |  | [1, +inf) | 10 |
+| gamma | gamma | gamma | Double |  | [0.0, 1.0] | 0.1 |
+| levelStart | level初始值 | level初始值 | Double |  |  |  |
+| predictNum | 预测条数 | 预测条数 | Integer |  |  | 1 |
+| predictionDetailCol | 预测详细信息列名 | 预测详细信息列名 | String |  |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| seasonalStart | seasonal初始值 | seasonal初始值 | double[] |  |  |  |
+| seasonalType | 季节类型 | 季节类型 | String |  | "MULTIPLICATIVE", "ADDITIVE" | "ADDITIVE" |
+| trendStart | trend初始值 | trend初始值 | Double |  |  |  |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 ## 代码示例
 ### Python 代码
@@ -58,7 +88,7 @@ source = dataframeToOperator(data, schemaStr='id int, ts timestamp, val double',
 
 source.link(
 			OverCountWindowStreamOp()
-				.setPartitionCols(["id"])
+				.setGroupCols(["id"])
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg_preceding(ts, val) as data")
@@ -112,7 +142,7 @@ public class HoltWintersStreamOpTest {
 
 		source.link(
 			new OverCountWindowStreamOp()
-				.setPartitionCols("id")
+				.setGroupCols("id")
 				.setTimeCol("ts")
 				.setPrecedingRows(5)
 				.setClause("mtable_agg(ts, val) as data")

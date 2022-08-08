@@ -25,7 +25,7 @@ import com.alibaba.alink.operator.common.optim.subfunc.PreallocateSkyk;
 import com.alibaba.alink.operator.common.optim.subfunc.PreallocateVector;
 import com.alibaba.alink.operator.common.optim.subfunc.UpdateModel;
 import com.alibaba.alink.params.shared.linear.LinearTrainParams;
-import com.alibaba.alink.params.shared.optim.HasNumSearchStepDv4;
+import com.alibaba.alink.params.shared.optim.HasNumSearchStepDefaultAs4;
 
 /**
  * The optimizer of lbfgs.
@@ -54,10 +54,10 @@ public class Lbfgs extends Optimizer {
 	public DataSet <Tuple2 <DenseVector, double[]>> optimize() {
 		//get parameters.
 		int maxIter = params.get(LinearTrainParams.MAX_ITER);
-		int numSearchStep = params.get(HasNumSearchStepDv4.NUM_SEARCH_STEP);
+		int numSearchStep = params.get(HasNumSearchStepDefaultAs4.NUM_SEARCH_STEP);
 		checkInitCoef();
 
-		/**
+		/*
 		 * solving problem using iteration.
 		 * trainData is the distributed samples.
 		 * initCoef is the initial model coefficient, which will be broadcast to every worker.
@@ -108,7 +108,7 @@ public class Lbfgs extends Optimizer {
 		private static final long serialVersionUID = -4061612963118027380L;
 		private transient DenseVector oldGradient;
 		private transient double[] alpha;
-		private int m;
+		private final int m;
 
 		private CalDirection(int numCorrections) {
 			m = numCorrections;
@@ -148,7 +148,7 @@ public class Lbfgs extends Optimizer {
 
 			// compute H^-1 * g_k
 			int delta = k > m ? k - m : 0;
-			int l = k <= m ? k : m;
+			int l = Math.min(k, m);
 			if (alpha == null) {
 				alpha = new double[m];
 			}

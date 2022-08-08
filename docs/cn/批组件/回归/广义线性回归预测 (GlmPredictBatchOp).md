@@ -5,17 +5,33 @@ Python 类名：GlmPredictBatchOp
 
 
 ## 功能介绍
-使用GLM模型，对数据进行预测
+GLM(Generalized Linear Model)又称为广义线性回归模型，是一种常用的统计模型，也是一种非线性模型族，许多常用的模型都属于广义线性回归。
+
+它描述了响应和预测因子之间的非线性关系。广义线性回归模型具有线性回归模型的广义特征。响应变量遵循正态、二项式、泊松分布、伽马分布或逆高斯分布，链接函数f定义了μ和预测值的线性组合之间的关系。
+
+GLM功能包括GLM训练，GLM预测(批和流)和GLM评估, 其中训练使用迭代最小二乘方法。
+
+### 算法使用
+| 分布 | 连接函数 | 对应算法 |
+|:----|:---|:---|
+| 二项分布 | Logit | 逻辑回归 |
+| 多项分布 | Logit | softmax| 
+| 高斯分布 | Identity | 线性回归 | 
+| Poisson分布 | Log | Possion回归 |
+
+### 文献或出处
+[1] https://en.wikipedia.org/wiki/Generalized_linear_model
 
 ## 参数说明
 
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |
-| linkPredResultCol | 连接函数结果的列名 | 连接函数结果的列名 | String |  | null |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| predictionCol | 预测结果列名 | 预测结果列名 | String | ✓ |  |  |
+| linkPredResultCol | 连接函数结果的列名 | 连接函数结果的列名 | String |  |  | null |
+| modelFilePath | 模型的文件路径 | 模型的文件路径 | String |  |  | null |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 

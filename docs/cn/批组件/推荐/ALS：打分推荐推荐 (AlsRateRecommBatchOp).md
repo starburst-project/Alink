@@ -5,17 +5,17 @@ Python 类名：AlsRateRecommBatchOp
 
 
 ## 功能介绍
-ALS预测，可进行评分预测。
+ALS打分预测，可对每一个（user，item）输入对进行评分预测。这里的ALS模型可以是隐式模型，也可以是显式模型。
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| itemCol | Item列列名 | Item列列名 | String | ✓ |  |
-| recommCol | 推荐结果列名 | 推荐结果列名 | String | ✓ |  |
-| userCol | User列列名 | User列列名 | String | ✓ |  |
-| reservedCols | 算法保留列名 | 算法保留列 | String[] |  | null |
-| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  | 1 |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| itemCol | Item列列名 | Item列列名 | String | ✓ |  |  |
+| recommCol | 推荐结果列名 | 推荐结果列名 | String | ✓ |  |  |
+| userCol | User列列名 | User列列名 | String | ✓ |  |  |
+| reservedCols | 算法保留列名 | 算法保留列 | String[] |  |  | null |
+| numThreads | 组件多线程线程个数 | 组件多线程线程个数 | Integer |  |  | 1 |
 
 
 

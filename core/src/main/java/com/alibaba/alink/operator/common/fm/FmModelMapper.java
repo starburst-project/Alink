@@ -7,15 +7,13 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
-import com.alibaba.alink.common.AlinkGlobalConfiguration;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.linalg.Vector;
-import com.alibaba.alink.common.mapper.ModelMapper;
 import com.alibaba.alink.common.mapper.RichModelMapper;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.common.utils.TableUtil;
-import com.alibaba.alink.operator.common.fm.BaseFmTrainBatchOp.FmDataFormat;
 import com.alibaba.alink.operator.common.fm.BaseFmTrainBatchOp.Task;
 import com.alibaba.alink.operator.common.linear.FeatureLabelUtil;
 import com.alibaba.alink.operator.common.optim.FmOptimizer;
@@ -24,8 +22,6 @@ import com.alibaba.alink.params.recommendation.FmPredictParams;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.alibaba.alink.common.utils.JsonConverter.gson;
 
 /**
  * Fm mapper maps one sample to a sample with a predicted label.
@@ -37,7 +33,6 @@ public class FmModelMapper extends RichModelMapper {
 	private FmModelData model;
 	private int[] dim;
 	private int[] featureIdx;
-	private long lastModelVersion = Long.MAX_VALUE;
 	private final TypeInformation <?> labelType;
 	private transient ThreadLocal <DenseVector> threadLocalVec;
 
@@ -83,68 +78,6 @@ public class FmModelMapper extends RichModelMapper {
 		}
 	}
 
-	@Override
-	public ModelMapper createNew(List <Row> modelRows) {
-		FmModelMapper fmModelMapper = new FmModelMapper(getModelSchema(), getDataSchema(), params.clone());
-		FmModelData modelData = new FmModelData();
-		modelData.vectorColName = this.model.vectorColName;
-		modelData.featureColNames = this.model.featureColNames;
-		modelData.labelColName = this.model.labelColName;
-		modelData.task = this.model.task;
-		modelData.dim = this.model.dim;
-		modelData.vectorSize = this.model.vectorSize;
-
-		modelData.labelValues = this.model.labelValues;
-
-		modelData.fmModel = new FmDataFormat();
-		modelData.fmModel.factors = new double[modelData.vectorSize][];
-		modelData.fmModel.dim = modelData.dim;
-
-		int featureSize = model.fmModel.factors.length;
-		int cnt = 0;
-		for (int i = 0; i < featureSize; ++i) {
-			if (model.fmModel.factors[i] != null) {
-				modelData.fmModel.factors[i] = model.fmModel.factors[i];
-			}
-		}
-
-		Params meta = null;
-		for (Row row : modelRows) {
-			Long featureId = (Long) row.getField(0);
-			if (featureId == null && row.getField(1) != null) {
-				String metaStr = (String) row.getField(1);
-				meta = Params.fromJson(metaStr);
-				break;
-			}
-		}
-
-		if (this.lastModelVersion == meta.get("lastModelVersion", Long.TYPE)
-			|| meta.get("isFullModel", Boolean.TYPE)) {
-			cnt = 0;
-			this.lastModelVersion = meta.get("modelVersion", Long.TYPE);
-			for (Row row : modelRows) {
-				Long featureId = (Long) row.getField(0);
-				if (featureId >= 0) {
-					cnt++;
-					double[] factor = gson.fromJson((String) row.getField(1), double[].class);
-					modelData.fmModel.factors[featureId.intValue()] = factor;
-				} else if (featureId == -1) {
-					double[] factor = gson.fromJson((String) row.getField(1), double[].class);
-					model.fmModel.bias = factor[0];
-				}
-			}
-		}
-		if (AlinkGlobalConfiguration.isPrintProcessInfo()) {
-			if (meta.get("isFullModel", Boolean.TYPE)) {
-				System.out.println("load fm full model ok, model size : " + cnt);
-			} else {
-				System.out.println("load fm increment model ok, model size : " + cnt);
-			}
-		}
-		fmModelMapper.model = modelData;
-		return this;
-	}
-
 	public double getY(SparseVector feature, boolean isBinCls) {
 		double y = FmOptimizer.calcY(feature, model.fmModel, dim).f0;
 		if (isBinCls) {
@@ -153,8 +86,8 @@ public class FmModelMapper extends RichModelMapper {
 		return y;
 	}
 
-	private static double logit(double x) {
-		return 1. / (1. + Math.exp(-x));
+	private static double logit(double y) {
+		return 1. / (1. + Math.exp(-y));
 	}
 
 	public FmModelData getModel() {
@@ -167,7 +100,7 @@ public class FmModelMapper extends RichModelMapper {
 	}
 
 	@Override
-	protected Tuple2 <Object, String> predictResultDetail(SlicedSelectedSample selection) throws Exception {
+	protected Tuple2 <Object, String> predictResultDetail(SlicedSelectedSample selection) {
 		Vector vec;
 		if (vectorColIndex != -1) {
 			vec = FeatureLabelUtil.getVectorFeature(selection.get(vectorColIndex), false, model.vectorSize);
@@ -190,7 +123,7 @@ public class FmModelMapper extends RichModelMapper {
 			String jsonDetail = JsonConverter.toJson(detail);
 			return Tuple2.of(label, jsonDetail);
 		} else {
-			throw new RuntimeException("task not support yet");
+			throw new AkUnsupportedOperationException("task not support yet");
 		}
 	}
 }

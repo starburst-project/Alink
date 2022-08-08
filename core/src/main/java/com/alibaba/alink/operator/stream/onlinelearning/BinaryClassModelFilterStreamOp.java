@@ -1,6 +1,5 @@
 package com.alibaba.alink.operator.stream.onlinelearning;
 
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -11,6 +10,16 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.function.TriFunction;
 
 import com.alibaba.alink.common.AlinkGlobalConfiguration;
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.Internal;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortSpec.OpType;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.annotation.TypeCollections;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
 import com.alibaba.alink.common.mapper.ModelMapper;
 import com.alibaba.alink.common.utils.RowUtil;
 import com.alibaba.alink.operator.common.evaluation.BinaryClassMetrics;
@@ -40,6 +49,15 @@ import static com.alibaba.alink.operator.common.evaluation.ClassificationEvaluat
  */
 
 @Internal
+@InputPorts(values = {
+	@PortSpec(value = PortType.MODEL_STREAM, opType = OpType.SAME),
+	@PortSpec(value = PortType.DATA, opType = OpType.SAME),
+})
+@OutputPorts(values = {@PortSpec(value = PortType.MODEL_STREAM)})
+@ParamSelectColumnSpec(name = "vectorCol",
+	allowedTypeCollections = TypeCollections.VECTOR_TYPES)
+@ParamSelectColumnSpec(name = "labelCol")
+@NameCn("二分类模型过滤")
 public class BinaryClassModelFilterStreamOp<T extends BinaryClassModelFilterStreamOp<T>> extends StreamOperator <T> {
 
 	/**
@@ -84,7 +102,7 @@ public class BinaryClassModelFilterStreamOp<T extends BinaryClassModelFilterStre
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			throw new RuntimeException(ex.toString());
+			throw new AkUnclassifiedErrorException(ex.toString());
 		}
 
 		return (T) this;
@@ -96,6 +114,7 @@ public class BinaryClassModelFilterStreamOp<T extends BinaryClassModelFilterStre
 		private final List <Row> bufferRows = new ArrayList <>();
 		private final double aucThreshold;
 		private final double accuracyThreshold;
+		private final double logLossThreshold;
 		private final TypeInformation<?> labelType;
 
 		private final ModelMapper mapper;
@@ -124,6 +143,7 @@ public class BinaryClassModelFilterStreamOp<T extends BinaryClassModelFilterStre
 			this.positiveValue = params.get(BinaryClassModelFilterParams.POS_LABEL_VAL_STR);
 			this.aucThreshold = params.get(BinaryClassModelFilterParams.AUC_THRESHOLD);
 			this.accuracyThreshold = params.get(BinaryClassModelFilterParams.ACCURACY_THRESHOLD);
+			this.logLossThreshold = params.get(BinaryClassModelFilterParams.LOG_LOSS);
 			this.timestampColIndex = timestampColIndex;
 			this.countColIndex = countColIndex;
 		}
@@ -161,10 +181,12 @@ public class BinaryClassModelFilterStreamOp<T extends BinaryClassModelFilterStre
 					BinaryClassMetrics metrics = binaryMetricsSummary.toMetrics();
 					double auc = metrics.getAuc();
 					double accuracy = metrics.getAccuracy();
+					double logLoss = metrics.getLogLoss();
+
 					if (AlinkGlobalConfiguration.isPrintProcessInfo()) {
-						System.out.println("auc : " + auc + "     accuracy : " + accuracy);
+						System.out.println("auc : " + auc + "     accuracy : " + accuracy + "    logLoss : " + logLoss);
 					}
-					if (auc >= aucThreshold && accuracy >= accuracyThreshold) {
+					if (auc >= aucThreshold && accuracy >= accuracyThreshold && logLoss < logLossThreshold) {
 						for (Row r : oldModel) {
 							collector.collect(r);
 						}

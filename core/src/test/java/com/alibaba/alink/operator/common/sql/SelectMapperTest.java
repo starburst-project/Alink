@@ -8,11 +8,16 @@ import org.apache.flink.types.Row;
 
 import com.alibaba.alink.common.mapper.Mapper;
 import com.alibaba.alink.params.dataproc.HasClause;
+import com.alibaba.alink.pipeline.LocalPredictor;
+import com.alibaba.alink.pipeline.PipelineModel;
+import com.alibaba.alink.pipeline.sql.Select;
 import com.alibaba.alink.testutil.AlinkTestBase;
 import io.reactivex.rxjava3.functions.BiFunction;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -22,6 +27,24 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 
 public class SelectMapperTest extends AlinkTestBase {
+	@Test
+	public void testInputTypeSupport() throws Exception {
+		{
+			Select select = new Select().setClause("age + 1 as age");
+			PipelineModel pipeline = new PipelineModel(select);
+			LocalPredictor localPredictor = pipeline.collectLocalPredictor("age DECIMAL");
+			Row result = localPredictor.map(Row.of(new BigDecimal("1.")));
+			System.out.println(result);
+		}
+
+		{
+			Select select = new Select().setClause("age + 1 as age");
+			PipelineModel pipeline = new PipelineModel(select);
+			LocalPredictor localPredictor = pipeline.collectLocalPredictor("age BIGINT");
+			Row result = localPredictor.map(Row.of(new BigInteger("1")));
+			System.out.println(result);
+		}
+	}
 
 	@Test
 	public void testGeneral() throws Exception {
@@ -31,7 +54,7 @@ public class SelectMapperTest extends AlinkTestBase {
 		Params params = new Params();
 		params.set(HasClause.CLAUSE,
 			"id, name as eman, id + 1 as id2, CASE WHEN id=1 THEN 'q' ELSE 'p' END as col3, UPPER(name) as col4");
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(1, "'abc'", 2, "q", "'ABC'");
 		Row output = selectMapper.map(Row.of(1, "'abc'"));
@@ -55,7 +78,7 @@ public class SelectMapperTest extends AlinkTestBase {
 				+ "name LIKE name, name NOT LIKE name, name SIMILAR TO name, name NOT SIMILAR TO name,"
 				+ "name IN (name, name), name NOT IN (name, name)"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(true, false, false, true, false, true, false, true, false, true, true, false, true,
 			false,
@@ -78,7 +101,7 @@ public class SelectMapperTest extends AlinkTestBase {
 			"TRUE OR FALSE, true AND false, NOT true, true IS FALSE, true IS NOT FALSE,"
 				+ "true IS TRUE, true IS NOT TRUE, unknown IS UNKNOWN, true IS NOT UNKNOWN"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(true, false, false, false, true, true, false, true, true);
 		Row output = selectMapper.map(Row.of(1, "'abc'"));
@@ -105,7 +128,7 @@ public class SelectMapperTest extends AlinkTestBase {
 				+ "LOG2(id), LOG(id), SINH(id), COSH(id), TANH(id), UUID(), BIN(id),"
 				+ "LOG(3, id), HEX(id), HEX(name)"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(1, -1, 2, 0, 1, 1, 1.0, 1, 0, 1.0, 0.0, 0.0, 2.718281828459045, 1, 1, 1,
 			0.8414709848078965, 0.5403023058681398, 1.5574077246549023, 0.6420926159343306, 1.5707963267948966, 0.0,
@@ -143,7 +166,7 @@ public class SelectMapperTest extends AlinkTestBase {
 				+ ", LTRIM(' This is a test String.')"
 				+ ", RTRIM('This is a test String. ')"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of("'abc''abc'", 5, 5, "'ABC'", "'abc'", 1, "'abc'", "'abc''abc''abc'",
 			"This is a new string", "abc'", "hello flink", "'Abc'", "hello world", "aGVsbG8gd29ybGQ=", "??hi", "hi??",
@@ -180,7 +203,7 @@ public class SelectMapperTest extends AlinkTestBase {
 				+ "TIMESTAMPADD(WEEK, 1, DATE '2003-01-02'),"
 				+ "TIMESTAMPDIFF(DAY, TIMESTAMP '2003-01-02 10:00:00', TIMESTAMP '2003-01-03 10:00:00')"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row output = selectMapper.map(Row.of(1, "'abc'"));
 		try {
@@ -202,7 +225,7 @@ public class SelectMapperTest extends AlinkTestBase {
 				+ ", NULLIF(5, 5), NULLIF(5, 0)"
 				+ ", COALESCE(NULL, 5)"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(-1, -1, null, 5, 5);
 		Row output = selectMapper.map(Row.of(1, "'abc'"));
@@ -222,7 +245,7 @@ public class SelectMapperTest extends AlinkTestBase {
 		params.set(HasClause.CLAUSE,
 			"CAST('42' AS INT), CAST(NULL AS VARCHAR)"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		try {
 			Row output = selectMapper.map(Row.of(1, "'abc'"));
@@ -245,7 +268,7 @@ public class SelectMapperTest extends AlinkTestBase {
 				+ ", CARDINALITY(MAP[1, 2, 3, 4])"
 				+ ", MAP[1, 2, 3, 4][3]"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(3, 2, 2, 2, 4);
 		Row output = selectMapper.map(Row.of(1, "'abc'"));
@@ -265,7 +288,7 @@ public class SelectMapperTest extends AlinkTestBase {
 		params.set(HasClause.CLAUSE,
 			"ROW(1, 2, 3), ARRAY[1, 2, 3], MAP[1, 2, 3, 4]"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row output = selectMapper.map(Row.of(1, "'abc'"));
 		try {
@@ -284,7 +307,7 @@ public class SelectMapperTest extends AlinkTestBase {
 		params.set(HasClause.CLAUSE,
 			"id, MD5(name), SHA1(name), SHA224(name), SHA256(name), SHA384(name), SHA512(name), SHA2(name, 512)"
 		);
-		SelectMapper selectMapper = new SelectMapper(dataSchema, params);
+		CalciteSelectMapper selectMapper = new CalciteSelectMapper(dataSchema, params);
 		selectMapper.open();
 		Row expected = Row.of(1, "e41225f8921fffcead7a35a3ddabdeeb", "ff13f5e89c51b0b9af963d080ef0899c7a169080",
 			"66f30b83556e5b5b18559273e292cc64fff896dc1b9375f54c7f2b21",
@@ -320,20 +343,15 @@ public class SelectMapperTest extends AlinkTestBase {
 
 		Future <?>[] futures = new Future[numThreads];
 		for (int threadId = 0; threadId < numThreads; threadId += 1) {
-			int finalThreadId = threadId;
-			futures[threadId] = executorService.submit(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						for (int i = 0; i < numItems; i += 1) {
-							System.err.println("threadId = " + finalThreadId);
-							Row output = multiThreadMapper.map(inputs[i]);
-							assertEquals(output.toString(), outputs[i].toString());
-							Thread.sleep(10);
-						}
-					} catch (Exception e) {
-						throw new RuntimeException(e);
+			futures[threadId] = executorService.submit(() -> {
+				try {
+					for (int i = 0; i < numItems; i += 1) {
+						Row output = multiThreadMapper.map(inputs[i]);
+						assertEquals(output.toString(), outputs[i].toString());
+						Thread.sleep(10);
 					}
+				} catch (Exception e) {
+					throw new RuntimeException(e);
 				}
 			});
 		}
@@ -344,7 +362,7 @@ public class SelectMapperTest extends AlinkTestBase {
 	}
 
 	@Test
-	public void testMultiThread() throws Exception {
+	public void testMultiThread() {
 		int numItems = 100;
 
 		Row[] inputs = new Row[numItems];
@@ -360,7 +378,7 @@ public class SelectMapperTest extends AlinkTestBase {
 			"id, name as eman, id + 1 as id2, CASE WHEN id=1 THEN 'q' ELSE 'p' END as col3, UPPER(name) as col4");
 
 		try {
-			testMultiThreadMapper(SelectMapper::new, dataSchema, params, inputs, 4);
+			testMultiThreadMapper(CalciteSelectMapper::new, dataSchema, params, inputs, 4);
 		} catch (Throwable throwable) {
 			throw new RuntimeException(throwable);
 		}

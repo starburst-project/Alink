@@ -8,14 +8,16 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkParseErrorException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
+import com.alibaba.alink.common.exceptions.AkUnclassifiedErrorException;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.Vector;
 import com.alibaba.alink.common.linalg.VectorUtil;
-import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.operator.common.dataproc.SortUtils;
 import com.alibaba.alink.operator.common.recommendation.KObjectUtil;
 import org.apache.commons.lang3.ArrayUtils;
@@ -23,8 +25,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +53,7 @@ public class EvaluationUtil implements Serializable {
 		if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
 			return ((Comparable) o1).compareTo((Comparable) o2);
 		} else {
-			throw new RuntimeException("Input Labels are not comparable!");
+			throw new AkUnclassifiedErrorException("Input Labels are not comparable!");
 		}
 	}
 
@@ -101,7 +101,7 @@ public class EvaluationUtil implements Serializable {
 			}
 			return x.toString();
 		} else {
-			throw new RuntimeException("unsupported type: " + t.getClass().getName());
+			throw new AkUnsupportedOperationException("unsupported type: " + t.getClass().getName());
 		}
 	}
 
@@ -182,11 +182,20 @@ public class EvaluationUtil implements Serializable {
 	 * @return If rows is empty, return null. If binary is true, return BinaryClassMetrics. If binary is false, return
 	 * MultiClassMetrics.
 	 */
-	private static BaseMetricsSummary getDetailStatistics(Iterable <Row> rows,
+	public static BaseMetricsSummary getDetailStatistics(Iterable <Row> rows,
 														  String positiveValue,
 														  boolean binary,
 														  Tuple2 <Map <Object, Integer>, Object[]> tuple,
 														  TypeInformation labelType) {
+		return getDetailStatistics(rows, positiveValue, binary, tuple, labelType, new DefaultLabelProbMapExtractor());
+	}
+
+	public static BaseMetricsSummary getDetailStatistics(Iterable <Row> rows,
+														  String positiveValue,
+														  boolean binary,
+														  Tuple2 <Map <Object, Integer>, Object[]> tuple,
+														  TypeInformation labelType,
+														  LabelProbMapExtractor extractor) {
 		BinaryMetricsSummary binaryMetricsSummary = null;
 		MultiMetricsSummary multiMetricsSummary = null;
 		Tuple2 <Map <Object, Integer>, Object[]> labelIndexLabelArray = tuple;
@@ -198,7 +207,7 @@ public class EvaluationUtil implements Serializable {
 		}
 		if (checkRowFieldNotNull(row)) {
 			if (null == labelIndexLabelArray) {
-				TreeMap <Object, Double> labelProbMap = extractLabelProbMap(row, labelType);
+				TreeMap <Object, Double> labelProbMap = extractLabelProbMap(row, labelType, extractor);
 				labelIndexLabelArray = buildLabelIndexLabelArray(new HashSet <>(labelProbMap.keySet()), binary,
 					positiveValue, labelType, true);
 			}
@@ -221,7 +230,7 @@ public class EvaluationUtil implements Serializable {
 
 		while (null != row) {
 			if (checkRowFieldNotNull(row)) {
-				TreeMap <Object, Double> labelProbMap = extractLabelProbMap(row, labelType);
+				TreeMap <Object, Double> labelProbMap = extractLabelProbMap(row, labelType, extractor);
 				Object label = row.getField(0);
 				if (ArrayUtils.indexOf(labelIndexLabelArray.f1, label) >= 0) {
 					if (binary) {
@@ -254,22 +263,21 @@ public class EvaluationUtil implements Serializable {
 	 * @return the  |label, probability| map.
 	 */
 	public static TreeMap <Object, Double> extractLabelProbMap(Row row, TypeInformation <?> labelType) {
-		HashMap <String, Double> labelProbMap;
-		final String detailStr = row.getField(1).toString();
-		try {
-			labelProbMap = JsonConverter.fromJson(detailStr,
-				new TypeReference <HashMap <String, Double>>() {}.getType());
-		} catch (Exception e) {
-			throw new RuntimeException(
-				String.format("Fail to deserialize detail column %s!", detailStr));
-		}
-		Collection <Double> probabilities = labelProbMap.values();
-		probabilities.forEach(v ->
-			Preconditions.checkArgument(v <= 1.0 && v >= 0,
-				String.format("Probibality in %s not in range [0, 1]!", detailStr)));
-		Preconditions.checkArgument(
-			Math.abs(probabilities.stream().mapToDouble(Double::doubleValue).sum() - 1.0) < PROB_SUM_EPS,
-			String.format("Probability sum in %s not equal to 1.0!", detailStr));
+		return extractLabelProbMap(row, labelType, new DefaultLabelProbMapExtractor());
+	}
+
+	/**
+	 * Extract the (label, prob) map with given extractor.
+	 *
+	 * @param row       input row where the second field is prediction detail
+	 * @param labelType label type
+	 * @param extractor extractor
+	 * @return
+	 */
+	public static TreeMap <Object, Double> extractLabelProbMap(Row row, TypeInformation <?> labelType,
+															   LabelProbMapExtractor extractor) {
+		final String predDetailStr = row.getField(1).toString();
+		Map <String, Double> labelProbMap = extractor.extractAndCheck(predDetailStr);
 		TreeMap <Object, Double> castLabelProbMap = new TreeMap <>();
 		for (Map.Entry <String, Double> entry : labelProbMap.entrySet()) {
 			castLabelProbMap.put(castTo(entry.getKey(), labelType), entry.getValue());
@@ -280,7 +288,7 @@ public class EvaluationUtil implements Serializable {
 	public static void updateBinaryMetricsSummary(TreeMap <Object, Double> labelProbMap,
 												  Object label,
 												  BinaryMetricsSummary binaryMetricsSummary) {
-		Preconditions.checkState(labelProbMap.size() == BINARY_LABEL_NUMBER,
+		AkPreconditions.checkState(labelProbMap.size() == BINARY_LABEL_NUMBER,
 			"The number of labels must be equal to 2!");
 		binaryMetricsSummary.total++;
 		binaryMetricsSummary.logLoss += extractLogloss(labelProbMap, label);
@@ -574,7 +582,8 @@ public class EvaluationUtil implements Serializable {
 		List <Object> list = KObjectUtil.deserializeKObject(
 			s, new String[] {kObject}, new Type[] {Object.class}
 		).get(kObject);
-		Preconditions.checkNotNull(list, s + " not contains key '" + kObject + "', please check the input!");
+		AkPreconditions.checkNotNull(list,
+			new AkParseErrorException(s + " not contains key '" + kObject + "', please check the input!"));
 		return list;
 	}
 
@@ -612,7 +621,8 @@ public class EvaluationUtil implements Serializable {
 
 		@Override
 		public void flatMap(BaseMetricsSummary t, Collector <Row> collector) throws Exception {
-			Preconditions.checkNotNull(t, "Please check the evaluation input! there is no effective row!");
+			AkPreconditions.checkNotNull(t,
+				new AkIllegalDataException("Please check the evaluation input! there is no effective row!"));
 			collector.collect(t.toMetrics().serialize());
 		}
 	}

@@ -5,23 +5,25 @@ Python 类名：RandomWalkBatchOp
 
 
 ## 功能介绍
-RandomWalk是deepwalk中描述随机游走的一种算法。
+RandomWalk是deepwalk [1] 中描述随机游走的一种算法。
 在给定的图上，每次迭代过程中，点都会转移到它的邻居上，转移到每个邻居的概率和连接这两个点的边的权重相关。
 通过这样的随机游走可以获得固定长度的随机游走序列，这可以类比自然语言中的句子。
 
+[1] Bryan Perozzi et al. DeepWalk: online learning of social representations. KDD 2014.
+
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| sourceCol | 起始点列名 | 用来指定起始点列 | String | ✓ |  |
-| targetCol | 中止点点列名 | 用来指定中止点列 | String | ✓ |  |
-| walkLength | 游走的长度 | 随机游走完向量的长度 | Integer | ✓ |  |
-| walkNum | 路径数目 | 每一个起始点游走出多少条路径 | Integer | ✓ |  |
-| delimiter | 分隔符 | 用来分割字符串 | String |  | " " |
-| isToUndigraph | 是否转无向图 | 选为true时，会将当前图转成无向图，然后再游走 | Boolean |  | false |
-| isWeightedSampling | 是否为加权采样 | 该算法支持加权采样和随机采样两种采样方式 | Boolean |  | true |
-| samplingMethod | 起始点列名 | 用来指定起始点列 | String |  | "ALIAS" |
-| weightCol | 权重列名 | 用来指定权重列, 权重列的值必须为非负的浮点数, 否则算法抛异常。 | String |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| sourceCol | 起始点列名 | 用来指定起始点列 | String | ✓ | 所选列类型为 [INTEGER, LONG, STRING] |  |
+| targetCol | 中止点点列名 | 用来指定中止点列 | String | ✓ | 所选列类型为 [INTEGER, LONG, STRING] |  |
+| walkLength | 游走的长度 | 随机游走完向量的长度 | Integer | ✓ |  |  |
+| walkNum | 路径数目 | 每一个起始点游走出多少条路径 | Integer | ✓ |  |  |
+| delimiter | 分隔符 | 用来分割字符串 | String |  |  | " " |
+| isToUndigraph | 是否转无向图 | 选为true时，会将当前图转成无向图，然后再游走 | Boolean |  |  | false |
+| isWeightedSampling | 是否为加权采样 | 该算法支持加权采样和随机采样两种采样方式 | Boolean |  |  | true |
+| samplingMethod | 起始点列名 | 用来指定起始点列 | String |  |  | "ALIAS" |
+| weightCol | 权重列名 | 权重列对应的列名 | String |  | 所选列类型为 [BIGDECIMAL, BIGINTEGER, BYTE, DOUBLE, FLOAT, INTEGER, LONG, SHORT] | null |
 
 
 

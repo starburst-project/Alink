@@ -1,8 +1,9 @@
 package com.alibaba.alink.operator.common.evaluation;
 
-import org.apache.flink.util.Preconditions;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * LongMatrix stores a 2 dimension long array, and provides some methods to operate on the array it represents.
@@ -25,13 +26,13 @@ public class LongMatrix implements Serializable {
 	private int colNum;
 
 	public LongMatrix(long[][] matrix) {
-		Preconditions.checkNotNull(matrix, "The matrix is null!");
-		Preconditions.checkState(matrix.length > 0 && matrix[0].length > 0, "The matrix is empty!");
+		AkPreconditions.checkNotNull(matrix, "The matrix is null!");
+		AkPreconditions.checkState(matrix.length > 0 && matrix[0].length > 0, "The matrix is empty!");
 		this.matrix = matrix;
-		this.rowNum = matrix.length;
-		this.colNum = matrix[0].length;
+		rowNum = matrix.length;
+		colNum = matrix[0].length;
 		for (int i = 1; i < rowNum; i++) {
-			Preconditions.checkState(matrix[i].length == colNum, "The column numbers are not equal!");
+			AkPreconditions.checkState(matrix[i].length == colNum, "The column numbers are not equal!");
 		}
 	}
 
@@ -48,7 +49,7 @@ public class LongMatrix implements Serializable {
 	}
 
 	public void plusEqual(LongMatrix other) {
-		Preconditions.checkArgument(other.rowNum == rowNum && other.colNum == colNum,
+		AkPreconditions.checkArgument(other.rowNum == rowNum && other.colNum == colNum,
 			"Matrix size not the same! The rowNums are {},{}; the colNums are {},{}.", rowNum, other.rowNum, colNum,
 			other.colNum);
 		for (int i = 0; i < rowNum; i++) {
@@ -89,12 +90,23 @@ public class LongMatrix implements Serializable {
 	}
 
 	public long getValue(int i, int j) {
-		Preconditions.checkArgument(i >= 0 && i < rowNum && j >= 0 && j < colNum, "Index out of bound!");
+		AkPreconditions.checkArgument(i >= 0 && i < rowNum && j >= 0 && j < colNum, "Index out of bound!");
 		return matrix[i][j];
 	}
 
 	public void setValue(int i, int j, long value) {
-		Preconditions.checkArgument(i >= 0 && i < rowNum && j >= 0 && j < colNum, "Index out of bound!");
+		AkPreconditions.checkArgument(i >= 0 && i < rowNum && j >= 0 && j < colNum, "Index out of bound!");
 		matrix[i][j] = value;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof LongMatrix)) {
+			return false;
+		}
+		LongMatrix other = (LongMatrix) obj;
+		return Arrays.deepEquals(matrix, other.matrix)
+			&& rowNum == other.rowNum
+			&& colNum == other.colNum;
 	}
 }

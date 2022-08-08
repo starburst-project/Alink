@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -26,7 +28,6 @@ public class ClassLoaderContainer {
 		return INSTANCE;
 	}
 
-	private JarsPluginManager pluginManager;
 	private final Map <RegisterKey, ClassLoader> registeredClassLoaders = new HashMap <>();
 
 	private ClassLoaderContainer() {
@@ -46,6 +47,12 @@ public class ClassLoaderContainer {
 		}
 
 		hit = registeredClassLoaders.get(new RegisterKey(key.getName(), null));
+
+		if (hit != null) {
+			return hit;
+		}
+
+		hit = loadFromThreadContext(key, service, serviceFilter);
 
 		if (hit != null) {
 			return hit;
@@ -110,6 +117,22 @@ public class ClassLoaderContainer {
 		);
 	}
 
+	private <T> ClassLoader loadFromThreadContext(
+		RegisterKey key, Class <T> service, Predicate <T> serviceFilter) {
+
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+		Iterable<T> services = ServiceLoader.load(service, classLoader);
+
+		for (T s : services) {
+			if (serviceFilter.test(s)) {
+				return classLoader;
+			}
+		}
+
+		return null;
+	}
+
 	private <T> ClassLoader loadFromPlugin(
 		RegisterKey key,
 		DistributeCache distributeCache,
@@ -119,15 +142,11 @@ public class ClassLoaderContainer {
 
 		final List <Tuple2 <T, PluginDescriptor>> loadedServices = new ArrayList <>();
 
-		// from plugin
-		if (pluginManager == null) {
-			distributeCache.distributeAsLocalFile();
-			pluginManager = PluginUtils.createJarsPluginManagerFromRootFolder(
-				PluginUtils.readPluginConf(distributeCache.context())
-			);
-		}
+		distributeCache.distributeAsLocalFile();
 
-		pluginManager
+		PluginUtils.createJarsPluginManagerFromRootFolder(
+				PluginUtils.readPluginConf(distributeCache.context())
+			)
 			.load(service, AlinkGlobalConfiguration.getFlinkVersion(), key.getName(), key.getVersion())
 			.forEachRemaining(t -> {
 				if (serviceFilter.test(t.f0)) {

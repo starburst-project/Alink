@@ -7,6 +7,7 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 
+import com.alibaba.alink.common.annotation.NameCn;
 import com.alibaba.alink.common.io.annotations.AnnotationUtils;
 import com.alibaba.alink.common.io.annotations.IOType;
 import com.alibaba.alink.common.io.annotations.IoOpAnnotation;
@@ -17,14 +18,16 @@ import com.alibaba.alink.common.linalg.VectorUtil;
 import com.alibaba.alink.common.utils.DataSetConversionUtil;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
+import com.alibaba.alink.params.io.LibSvmSinkBatchParams;
 import com.alibaba.alink.params.io.LibSvmSinkParams;
 
 /**
  * Sink the data to files in libsvm format.
  */
 @IoOpAnnotation(name = "libsvm", ioType = IOType.SinkBatch)
+@NameCn("LibSvm文件导出")
 public final class LibSvmSinkBatchOp extends BaseSinkBatchOp <LibSvmSinkBatchOp>
-	implements LibSvmSinkParams <LibSvmSinkBatchOp> {
+	implements LibSvmSinkBatchParams <LibSvmSinkBatchOp> {
 
 	private static final long serialVersionUID = 1706349265088035032L;
 
@@ -56,7 +59,7 @@ public final class LibSvmSinkBatchOp extends BaseSinkBatchOp <LibSvmSinkBatchOp>
 			for (int i = 0; i < indices.length; i++) {
 				indices[i] = indices[i] + startIndex;
 			}
-			vectorStr = v.toString();
+			vectorStr = VectorUtil.serialize(v);
 		}
 		return labelStr + " " + vectorStr;
 	}
@@ -84,7 +87,7 @@ public final class LibSvmSinkBatchOp extends BaseSinkBatchOp <LibSvmSinkBatchOp>
 				private static final long serialVersionUID = 8796282303884042197L;
 
 				@Override
-				public Row map(Row value) throws Exception {
+				public Row map(Row value) {
 					return Row.of(
 						formatLibSvm(value.getField(labelColIdx), value.getField(vectorColIdx), startIndex)
 					);
@@ -102,7 +105,8 @@ public final class LibSvmSinkBatchOp extends BaseSinkBatchOp <LibSvmSinkBatchOp>
 			.setQuoteChar(null)
 			.setFilePath(getFilePath())
 			.setOverwriteSink(getOverwriteSink())
-			.setFieldDelimiter(" ");
+			.setFieldDelimiter(" ")
+			.setPartitionCols(getPartitionCols());
 
 		outputBatchOp.link(sink);
 		return this;

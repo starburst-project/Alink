@@ -9,9 +9,9 @@ Python 类名：FirstNBatchOp
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| size | 采样个数 | 采样个数 | Integer | ✓ |  |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| size | 采样个数 | 采样个数 | Integer | ✓ | [1, +inf) |  |
 
 
 
@@ -32,8 +32,6 @@ df = pd.DataFrame([
        ["9.1,9.1,9.1"],
        ["9.2,9.2,9.2"]
 ])
-    
-
 
 # batch source 
 inOp = BatchOperator.fromDataframe(df, schemaStr='Y string')
@@ -76,8 +74,6 @@ public class FirstNBatchOpTest {
 ```
 
 ### 运行结果
-
-
 |Y|
 |---|
 |0,0,0|

@@ -16,6 +16,7 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
 import com.alibaba.alink.common.MLEnvironmentFactory;
+import com.alibaba.alink.common.exceptions.AkIllegalArgumentException;
 import com.alibaba.alink.common.io.filesystem.AkStream;
 import com.alibaba.alink.common.io.filesystem.AkStream.AkReader;
 import com.alibaba.alink.common.io.filesystem.AkUtils;
@@ -31,11 +32,15 @@ import com.alibaba.alink.common.utils.DataSetConversionUtil;
 import com.alibaba.alink.common.utils.JsonConverter;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
+import com.alibaba.alink.operator.batch.sink.AkSinkBatchOp;
 import com.alibaba.alink.operator.batch.source.MemSourceBatchOp;
 import com.alibaba.alink.operator.batch.source.TableSourceBatchOp;
-import com.alibaba.alink.operator.common.io.csv.CsvUtil;
 import com.alibaba.alink.operator.common.io.types.FlinkTypeConverter;
+import com.alibaba.alink.operator.common.stream.model.ModelStreamUtils;
 import com.alibaba.alink.params.ModelStreamScanParams;
+import com.alibaba.alink.params.io.ModelFileSinkParams;
+import com.alibaba.alink.params.shared.HasModelFilePath;
+import com.alibaba.alink.params.shared.HasOverwriteSink;
 import com.alibaba.alink.pipeline.recommendation.BaseRecommender;
 import com.alibaba.alink.pipeline.recommendation.RecommenderUtil;
 import org.apache.commons.lang3.ArrayUtils;
@@ -53,8 +58,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static com.alibaba.alink.common.mapper.PipelineModelMapper.getExtendModelSchema;
 
 /**
  * A utility class for exporting {@link PipelineModel}.
@@ -233,6 +236,26 @@ public class ModelExporterUtils {
 				"Error pipeline stage. Could not get column types from pipeline model."
 			);
 		} else if (stage instanceof ModelBase) {
+			ModelBase <?> model = (ModelBase <?>) stage;
+
+			Params params = model.getParams();
+
+			if (params.get(ModelFileSinkParams.MODEL_FILE_PATH) != null) {
+				if (model.modelData != null) {
+
+					model
+						.modelData
+						.link(
+							new AkSinkBatchOp()
+								.setFilePath(FilePath.deserialize(params.get(ModelFileSinkParams.MODEL_FILE_PATH)))
+								.setMLEnvironmentId(model.getModelData().getMLEnvironmentId())
+								.setOverwriteSink(params.get(HasOverwriteSink.OVERWRITE_SINK))
+						);
+				}
+
+				return null;
+			}
+
 			return ((ModelBase <?>) stage).getModelData().getColTypes();
 		} else if (stage instanceof Pipeline) {
 			throw new IllegalArgumentException(
@@ -300,14 +323,17 @@ public class ModelExporterUtils {
 					Tuple2 <TypeInformation <?>[], int[]> merged
 						= mergeType(first, currentNode.types);
 
-					currentNode.schemaIndices = merged.f1;
+					if (currentNode.types != null) {
+						currentNode.schemaIndices = merged.f1;
+					}
+
 					first = merged.f0;
 				}
 
 				node.types = first;
 			} else {
 				node.types = getTypes(node.stage);
-				node.colNames = getColNames(node.stage);
+				node.colNames = node.types == null ? null : getColNames(node.stage);
 			}
 		});
 
@@ -414,11 +440,13 @@ public class ModelExporterUtils {
 				&& stageNode.children == null
 				&& stageNode.stage instanceof ModelBase <?>) {
 
+				ModelBase <?> model = ((ModelBase <?>) stageNode.stage);
+
 				final long localId = id[0];
 				final int[] localSchemaIndices = stageNode.schemaIndices;
 
 				DataSet <Row> modelData =
-					((ModelBase <?>) stageNode.stage)
+					model
 						.getModelData()
 						.getDataSet()
 						.map(new MapFunction <Row, Row>() {
@@ -552,9 +580,12 @@ public class ModelExporterUtils {
 
 			// leaf node.
 			if (stageNode.children == null) {
-				if (stageNode.parent >= 0
-					&& stageNode.schemaIndices != null
-					&& stageNode.colNames != null) {
+
+				if (stageNode.stage == null
+					|| stageNode.stage.getParams().get(HasModelFilePath.MODEL_FILE_PATH) != null) {
+
+					// pass
+				} else if (stageNode.stage instanceof ModelBase <?>) {
 
 					final long localId = id[0];
 					final int[] localSchemaIndices = stageNode.schemaIndices;
@@ -721,7 +752,7 @@ public class ModelExporterUtils {
 		);
 	}
 
-	static StageNode[] deserializePipelineStagesFromMeta(Row metaRow, TableSchema schema) {
+	public static StageNode[] deserializePipelineStagesFromMeta(Row metaRow, TableSchema schema) {
 		return deserializeMeta(metaRow, schema, 1).f0;
 	}
 
@@ -757,7 +788,7 @@ public class ModelExporterUtils {
 
 			AkStream stream = new AkStream(filePath);
 
-			schema = CsvUtil.schemaStr2Schema(stream.getAkMeta().schemaStr);
+			schema = TableUtil.schemaStr2Schema(stream.getAkMeta().schemaStr);
 
 			final int idColIndex = TableUtil.findColIndexWithAssertAndHint(schema, ID_COL_NAME);
 
@@ -851,9 +882,30 @@ public class ModelExporterUtils {
 
 			// leaf node.
 			if (stageNode.children == null) {
-				if (stageNode.parent >= 0
-					&& stageNode.schemaIndices != null
-					&& stageNode.colNames != null) {
+				if (stageNode.stage == null) {
+					reverseStages.add(Tuple3.of(null, null, null));
+				} else if (stageNode.stage.getParams().get(HasModelFilePath.MODEL_FILE_PATH) != null) {
+
+					List <Row> modelData = new ArrayList <>();
+					TableSchema schema;
+					try {
+						AkStream akStream = new AkStream(
+							FilePath.deserialize(stageNode.stage.getParams().get(HasModelFilePath.MODEL_FILE_PATH))
+						);
+
+						schema = TableUtil.schemaStr2Schema(akStream.getAkMeta().schemaStr);
+
+						try (AkReader akReader = akStream.getReader()) {
+							for (Row row : akReader) {
+								modelData.add(row);
+							}
+						}
+					} catch (IOException e) {
+						throw new IllegalStateException(e);
+					}
+
+					reverseStages.add(Tuple3.of(stageNode.stage, schema, modelData));
+				} else if (stageNode.stage instanceof ModelBase) {
 
 					final int[] localSchemaIndices = stageNode.schemaIndices;
 					final int oldCursor = cursor[0];
@@ -965,7 +1017,7 @@ public class ModelExporterUtils {
 		return mapper;
 	}
 
-	static LocalPredictor loadLocalPredictorFromPipelineModel(
+	static Mapper[] loadLocalPredictorFromPipelineModelAsMappers(
 		FilePath filePath, TableSchema inputSchema) throws Exception {
 		Tuple2 <TableSchema, List <Row>> readed = AkUtils.readFromPath(filePath);
 		Tuple2 <TableSchema, Row> schemaAndMeta = ModelExporterUtils.loadMetaFromAkFile(filePath);
@@ -981,9 +1033,51 @@ public class ModelExporterUtils {
 			PipelineModelMapper pipelineModelMapper
 				= new PipelineModelMapper(readed.f0, inputSchema, params);
 			pipelineModelMapper.loadModel(readed.f1);
-			return new LocalPredictor(pipelineModelMapper);
+			return new Mapper[] {pipelineModelMapper};
 		}
-		return new LocalPredictor(mappers);
+		return mappers;
+	}
+
+	static Mapper[] loadLocalPredictorFromPipelineModelAsMappers(
+		FilePath filePath, TableSchema inputSchema, Params params) throws Exception {
+		FilePath finalFilePath = filePath;
+		FilePath streamFilePath = FilePath.deserialize(params.get(ModelStreamScanParams.MODEL_STREAM_FILE_PATH));
+		if (streamFilePath != null && filePath == null) {
+			FilePath tmpFilePath = ModelStreamUtils.getLatestModelPath(streamFilePath);
+			if (tmpFilePath != null) {
+				finalFilePath = tmpFilePath;
+			} else {
+				throw new AkIllegalArgumentException("Pipeline model path is null and no initial model found.");
+			}
+		}
+		Tuple2 <TableSchema, List <Row>> readed = AkUtils.readFromPath(finalFilePath);
+		Tuple2 <TableSchema, Row> schemaAndMeta = ModelExporterUtils.loadMetaFromAkFile(finalFilePath);
+		Tuple2 <StageNode[], Params> stagesAndParams
+			= ModelExporterUtils.deserializePipelineStagesAndParamsFromMeta(schemaAndMeta.f1, schemaAndMeta.f0);
+		Mapper[] mappers = loadMapperListFromStages(readed.f1, readed.f0, inputSchema).getMappers();
+		Params finalParams = stagesAndParams.f1;
+		if (streamFilePath != null) {
+			finalParams.set(ModelStreamScanParams.MODEL_STREAM_FILE_PATH, streamFilePath.serialize());
+		}
+		if (params.contains(ModelStreamScanParams.MODEL_STREAM_SCAN_INTERVAL)) {
+			finalParams.set(ModelStreamScanParams.MODEL_STREAM_SCAN_INTERVAL,
+				params.get(ModelStreamScanParams.MODEL_STREAM_SCAN_INTERVAL));
+		}
+		if (params.contains(ModelStreamScanParams.MODEL_STREAM_START_TIME)) {
+			finalParams.set(ModelStreamScanParams.MODEL_STREAM_START_TIME,
+				params.get(ModelStreamScanParams.MODEL_STREAM_START_TIME));
+		}
+		if (finalParams.get(ModelStreamScanParams.MODEL_STREAM_FILE_PATH) != null) {
+			TableSchema extendSchema = mappers[mappers.length - 1].getOutputSchema();
+			finalParams.set(PipelineModelMapper.PIPELINE_TRANSFORM_OUT_COL_NAMES, extendSchema.getFieldNames());
+			finalParams.set(PipelineModelMapper.PIPELINE_TRANSFORM_OUT_COL_TYPES,
+				FlinkTypeConverter.getTypeString(extendSchema.getFieldTypes()));
+			PipelineModelMapper pipelineModelMapper
+				= new PipelineModelMapper(readed.f0, inputSchema, finalParams);
+			pipelineModelMapper.loadModel(readed.f1);
+			return new Mapper[] {pipelineModelMapper};
+		}
+		return mappers;
 	}
 
 	private static int next(List <Row> all, Integer[] order, int cursor, int field) {

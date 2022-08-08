@@ -1,9 +1,5 @@
 package com.alibaba.alink.operator.batch.dataproc;
 
-import com.alibaba.alink.common.utils.TableUtil;
-import com.alibaba.alink.operator.batch.BatchOperator;
-import com.alibaba.alink.params.dataproc.StrafiedSampleWithSizeParams;
-
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.sampling.DistributedRandomSampler;
@@ -12,7 +8,18 @@ import org.apache.flink.api.java.sampling.ReservoirSamplerWithoutReplacement;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
+
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.ParamSelectColumnSpec;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkIllegalArgumentException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
+import com.alibaba.alink.common.utils.TableUtil;
+import com.alibaba.alink.operator.batch.BatchOperator;
+import com.alibaba.alink.params.dataproc.StrafiedSampleWithSizeParams;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,6 +28,10 @@ import java.util.Map;
 /**
  * StratifiedSample with given size with or without replacement.
  */
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = @PortSpec(PortType.DATA))
+@ParamSelectColumnSpec(name = "strataCol", portIndices = 0)
+@NameCn("固定条数分层随机采样")
 public final class StratifiedSampleWithSizeBatchOp extends BatchOperator <StratifiedSampleWithSizeBatchOp>
 	implements StrafiedSampleWithSizeParams <StratifiedSampleWithSizeBatchOp> {
 
@@ -72,13 +83,14 @@ public final class StratifiedSampleWithSizeBatchOp extends BatchOperator <Strati
 			for (String keyRatio : keyRatios) {
 				String[] sizeArray = keyRatio.split(":");
 				int groupSize = new Integer(sizeArray[1]);
-				Preconditions.checkArgument(groupSize >= 0, "SampleSize must be non-negative!");
+				AkPreconditions.checkArgument(groupSize >= 0,
+					new AkIllegalArgumentException("SampleSize must be non-negative!"));
 				sampleNumsMap.put(sizeArray[0], groupSize);
 			}
 		}
 
 		@Override
-		public void reduce(Iterable <T> values, Collector <T> out) throws Exception {
+		public void reduce(Iterable <T> values, Collector <T> out) {
 			StratifiedSampleBatchOp.GetFirstIterator iterator = new StratifiedSampleBatchOp.GetFirstIterator(
 				values.iterator());
 			Integer numSample = sampleSize;
@@ -87,7 +99,7 @@ public final class StratifiedSampleWithSizeBatchOp extends BatchOperator <Strati
 				if (null != first) {
 					Object key = first.getField(keyIndex);
 					numSample = sampleNumsMap.get(String.valueOf(key));
-					Preconditions.checkNotNull(numSample, key + "is not contained in map!");
+					AkPreconditions.checkNotNull(numSample, key + "is not contained in map!");
 				} else {
 					return;
 				}

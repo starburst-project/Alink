@@ -49,9 +49,9 @@ catalogObject = CatalogObject(derby, ObjectPath(dbName, tableName))
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| catalogObject | catalog object | catalog object | String | ✓ |  |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| catalogObject | catalog object | catalog object | String | ✓ |  |  |
 
 
 ## 代码示例

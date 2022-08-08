@@ -13,8 +13,14 @@ import org.apache.flink.shaded.guava18.com.google.common.hash.HashFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
+import com.alibaba.alink.common.annotation.InputPorts;
+import com.alibaba.alink.common.annotation.NameCn;
+import com.alibaba.alink.common.annotation.OutputPorts;
+import com.alibaba.alink.common.annotation.PortSpec;
+import com.alibaba.alink.common.annotation.PortType;
+import com.alibaba.alink.common.exceptions.AkIllegalStateException;
+import com.alibaba.alink.common.exceptions.AkPreconditions;
 import com.alibaba.alink.common.utils.DataSetConversionUtil;
 import com.alibaba.alink.common.utils.RowUtil;
 import com.alibaba.alink.operator.batch.BatchOperator;
@@ -34,6 +40,9 @@ import static org.apache.flink.shaded.guava18.com.google.common.hash.Hashing.mur
 /**
  * Split a dataset into two parts.
  */
+@InputPorts(values = @PortSpec(PortType.DATA))
+@OutputPorts(values = {@PortSpec(PortType.DATA), @PortSpec(PortType.DATA)})
+@NameCn("数据拆分")
 public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 	implements SplitParams <SplitBatchOp> {
 
@@ -71,7 +80,7 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 				private static final long serialVersionUID = -287601103797809499L;
 
 				@Override
-				public Tuple2 <Long, Row> map(Row value) throws Exception {
+				public Tuple2 <Long, Row> map(Row value) {
 					Long hashValue = hashFunc.hashUnencodedChars(RowUtil.rowToString(value)).asLong();
 					return Tuple2.of(hashValue, value);
 				}
@@ -116,7 +125,7 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 			private static final long serialVersionUID = -1015919192379666607L;
 
 			@Override
-			public void flatMap(Tuple2 <Boolean, Row> value, Collector <Row> out) throws Exception {
+			public void flatMap(Tuple2 <Boolean, Row> value, Collector <Row> out) {
 				if (value.f0) {
 					out.collect(value.f1);
 				}
@@ -127,7 +136,7 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 			private static final long serialVersionUID = -7288487577579174535L;
 
 			@Override
-			public void flatMap(Tuple2 <Boolean, Row> value, Collector <Row> out) throws Exception {
+			public void flatMap(Tuple2 <Boolean, Row> value, Collector <Row> out) {
 				if (!value.f0) {
 					out.collect(value.f1);
 				}
@@ -153,7 +162,8 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 
 		@Override
 		public void mapPartition(Iterable <Tuple2 <Integer, Long>> values, Collector <long[]> out) throws Exception {
-			Preconditions.checkArgument(getRuntimeContext().getIndexOfThisSubtask() == 0);
+			AkPreconditions.checkArgument(getRuntimeContext().getIndexOfThisSubtask() == 0,
+				"The index of this task is not zero, but " + getRuntimeContext().getIndexOfThisSubtask());
 
 			long totCount = 0L;
 			List <Tuple2 <Integer, Long>> buffer = new ArrayList <>();
@@ -230,7 +240,7 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 			long[] eachSelect = Arrays.copyOfRange(bc.get(0), npart, npart * 2);
 
 			if (bc.get(0).length / 2 != getRuntimeContext().getNumberOfParallelSubtasks()) {
-				throw new RuntimeException("parallelism has changed");
+				throw new AkIllegalStateException("parallelism has changed");
 			}
 
 			int taskId = getRuntimeContext().getIndexOfThisSubtask();
@@ -293,7 +303,7 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 
 			int group = getRuntimeContext().getIndexOfThisSubtask();
 			if (bc.length / 2 != getRuntimeContext().getNumberOfParallelSubtasks()) {
-				throw new RuntimeException("parallelism has changed");
+				throw new AkIllegalStateException("parallelism has changed");
 			}
 			int count = (int) eachCount[group];
 			int select = (int) eachSelect[group];
@@ -358,9 +368,9 @@ public final class SplitBatchOp extends BatchOperator <SplitBatchOp>
 				}
 				cnt++;
 			}
-			Preconditions.checkArgument(cnt == (int) count, "Group value not equal to count value!");
+			AkPreconditions.checkArgument(cnt == count, "Group value not equal to count value!");
 			if (null != curValue) {
-				Preconditions.checkArgument(cnt - 1 == curValue && curIndex + 1 == select,
+				AkPreconditions.checkArgument(cnt - 1 == curValue && curIndex + 1 == select,
 					"Inner error, select number not equal to index!");
 				out.collect(Tuple2.of(true, pre.f1));
 			} else if (null != pre) {

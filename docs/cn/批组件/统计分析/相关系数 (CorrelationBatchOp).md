@@ -6,15 +6,28 @@ Python 类名：CorrelationBatchOp
 
 ## 功能介绍
 
-相关系数算法用于计算一个矩阵中每一列之间的相关系数，范围在[-1,1]之间。计算的时候，count数按两列间同时非空的元素个数计算，两两列之间可能不同。
+* 相关系数算法用于计算一个矩阵中每一列之间的相关系数，范围在[-1,1]之间。计算的时候，count数按两列间同时非空的元素个数计算，两两列之间可能不同。
+
+* 支持Pearson和Spearman两种相关系数
+
+* 只支持数字类型列。如果想计算vector列，请参考VectorCorrelationBatchOp
+
+### 使用方式
+* 通过collectCorrelation()获取CorrelationMetric.
+```python
+corr = corrOp.collectCorrelation()
+print(corr)
+print(corr.getCorrelation())
+print(corr.getCorrelation()[1][1])
+```
 
 ## 参数说明
 
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| method | 方法 | 方法：包含"PEARSON"和"SPEARMAN"两种，PEARSON。 | String |  | "PEARSON" |
-| selectedCols | 选中的列名数组 | 计算列对应的列名列表 | String[] |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| method | 方法 | 方法：包含"PEARSON"和"SPEARMAN"两种，PEARSON。 | String |  | "PEARSON", "SPEARMAN" | "PEARSON" |
+| selectedCols | 选中的列名数组 | 计算列对应的列名列表 | String[] |  |  | null |
 
 
 

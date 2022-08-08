@@ -5,22 +5,39 @@ Python 类名：MultilayerPerceptronTrainBatchOp
 
 
 ## 功能介绍
-多层感知机多分类模型
+多层感知机（MLP，Multilayer Perceptron）也被称作人工神经网络（ANN，Artificial Neural Network），经常用来进行多分类问题的训练预测。
+
+### 算法原理
+多层感知机算法除了输入输出层外，它中间可以有多个隐层，最简单的MLP只含一个隐层，即三层的结构，如下图：
+
+![](https://img.alicdn.com/imgextra/i3/O1CN0197rvPM290ndhiOaJv_!!6000000008006-2-tps-898-925.png)
+
+从上图可以看到，多层感知机层与层之间是全连接的。多层感知机最左边是输入层，中间是隐藏层，最后是输出层。 其中输出层对应的是各个分类标签，输出层
+的每一个节点对应每一个标签的出现的概率。
+
+### 算法使用
+多层感知机主要用于多分类问题，类似文字识别，语音识别，文本分析等问题。
+
+- 备注 ：该组件训练的时候 FeatureCols 和 VectorCol 是两个互斥参数，只能有一个参数来描述算法的输入特征。
+
+### 文献
+[1]Artificial neural networks (the multilayer perceptron)—a review of applications in the atmospheric sciences
+   MW Gardner, SR Dorling - Atmospheric environment, 1998 - Elsevier.
 
 ## 参数说明
 
-| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 默认值 |
-| --- | --- | --- | --- | --- | --- |
-| labelCol | 标签列名 | 输入表中的标签列名 | String | ✓ |  |
-| layers | 神经网络层大小 | 神经网络层大小 | int[] | ✓ |  |
-| epsilon | 收敛阈值 | 迭代方法的终止判断阈值，默认值为 1.0e-6 | Double |  | 1.0E-6 |
-| featureCols | 特征列名数组 | 特征列名数组，默认全选 | String[] |  | null |
-| l1 | L1 正则化系数 | L1 正则化系数，默认为0。 | Double |  | 0.0 |
-| l2 | 正则化系数 | L2 正则化系数，默认为0。 | Double |  | 0.0 |
-| maxIter | 最大迭代步数 | 最大迭代步数，默认为 100 | Integer |  | 100 |
-| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | null |
-| blockSize | 数据分块大小，默认值64 | 数据分块大小，默认值64 | Integer |  | 64 |
-| initialWeights | 初始权重值 | 初始权重值 | DenseVector |  | null |
+| 名称 | 中文名称 | 描述 | 类型 | 是否必须？ | 取值范围 | 默认值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| labelCol | 标签列名 | 输入表中的标签列名 | String | ✓ |  |  |
+| layers | 神经网络层大小 | 神经网络层大小 | int[] | ✓ |  |  |
+| blockSize | 数据分块大小，默认值64 | 数据分块大小，默认值64 | Integer |  |  | 64 |
+| epsilon | 收敛阈值 | 迭代方法的终止判断阈值，默认值为 1.0e-6 | Double |  | [0.0, +inf) | 1.0E-6 |
+| featureCols | 特征列名数组 | 特征列名数组，默认全选 | String[] |  | 所选列类型为 [BIGDECIMAL, BIGINTEGER, BYTE, DOUBLE, FLOAT, INTEGER, LONG, SHORT] | null |
+| initialWeights | 初始权重值 | 初始权重值 | DenseVector |  |  | null |
+| l1 | L1 正则化系数 | L1 正则化系数，默认为0。 | Double |  | [0.0, +inf) | 0.0 |
+| l2 | 正则化系数 | L2 正则化系数，默认为0。 | Double |  | [0.0, +inf) | 0.0 |
+| maxIter | 最大迭代步数 | 最大迭代步数，默认为 100 | Integer |  | [1, +inf) | 100 |
+| vectorCol | 向量列名 | 向量列对应的列名，默认值是null | String |  | 所选列类型为 [DENSE_VECTOR, SPARSE_VECTOR, STRING, VECTOR] | null |
 
 
 

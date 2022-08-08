@@ -7,8 +7,9 @@ import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 
 import com.alibaba.alink.common.MTable;
-import com.alibaba.alink.common.MTableTypes;
-import com.alibaba.alink.common.MTableUtils;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.MTableUtil;
+import com.alibaba.alink.common.exceptions.AkIllegalOperatorParameterException;
 import com.alibaba.alink.common.mapper.Mapper;
 import com.alibaba.alink.common.utils.TableUtil;
 import com.alibaba.alink.params.timeseries.LookupValueInTimeSeriesParams;
@@ -25,13 +26,13 @@ public class LookupValueInTimeSeriesMapper extends Mapper {
 		String timeCol = params.get(LookupValueInTimeSeriesParams.TIME_COL);
 		TypeInformation<?> typeTime = TableUtil.findColType(dataSchema, timeCol);
 		if (Types.SQL_TIMESTAMP != typeTime) {
-			throw new IllegalArgumentException("Type of column '" + timeCol + "' must be timestamp!");
+			throw new AkIllegalOperatorParameterException("Type of column '" + timeCol + "' must be timestamp!");
 		}
 
 		String timeSeriesCol = params.get(LookupValueInTimeSeriesParams.TIME_SERIES_COL);
 		TypeInformation<?> typeTS = TableUtil.findColType(dataSchema, timeSeriesCol);
-		if (!MTableTypes.M_TABLE.equals(typeTS)) {
-			throw new IllegalArgumentException("Type of column '" + timeSeriesCol + "' must be MTable!");
+		if (!AlinkTypes.M_TABLE.equals(typeTS)) {
+			throw new AkIllegalOperatorParameterException("Type of column '" + timeSeriesCol + "' must be MTable!");
 		}
 	}
 
@@ -46,7 +47,7 @@ public class LookupValueInTimeSeriesMapper extends Mapper {
 		if (selection.get(1) instanceof MTable) {
 			mTable = (MTable) selection.get(1);
 		} else {
-			mTable = new MTable((String) selection.get(1));
+			mTable = MTable.fromJson((String) selection.get(1));
 		}
 
 		if (mTable.getNumRow() == 0) {
@@ -56,7 +57,7 @@ public class LookupValueInTimeSeriesMapper extends Mapper {
 
 		Timestamp lookupTime = (Timestamp) selection.get(0);
 
-		TableSchema schema = mTable.getTableSchema();
+		TableSchema schema = mTable.getSchema();
 		String timeCol = null;
 		int timeIdx = -1;
 		TypeInformation<?>[] colTypes = schema.getFieldTypes();
@@ -67,13 +68,13 @@ public class LookupValueInTimeSeriesMapper extends Mapper {
 			}
 		}
 		if (timeIdx == -1) {
-			throw new RuntimeException("can not find time column, lookup failed");
+			throw new AkIllegalOperatorParameterException("can not find time column, lookup failed");
 		}
 
 		String[] valueCols = TableUtil.getNumericCols(schema);
 
 		if (valueCols.length >= 1) {
-			List<Object> times = MTableUtils.getColumn(mTable, timeCol);
+			List<Object> times = MTableUtil.getColumn(mTable, timeCol);
 			int idxRow = times.indexOf(lookupTime);
 			int idxCol = TableUtil.findColIndex(schema, valueCols[0]);
 			if (idxRow >= 0) {
@@ -81,7 +82,7 @@ public class LookupValueInTimeSeriesMapper extends Mapper {
 				return;
 			} else {
 				mTable.orderBy(timeIdx);
-				Timestamp[] timesArr = MTableUtils.getColumn(mTable, timeCol).toArray(new Timestamp[]{});
+				Timestamp[] timesArr = MTableUtil.getColumn(mTable, timeCol).toArray(new Timestamp[]{});
 				int pos = Arrays.binarySearch(timesArr, lookupTime);
 				if (pos == -1 || -1 - pos == timesArr.length) {
 					result.set(0, null);

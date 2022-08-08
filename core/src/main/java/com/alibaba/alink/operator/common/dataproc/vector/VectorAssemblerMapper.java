@@ -4,7 +4,9 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.ml.api.misc.param.Params;
 import org.apache.flink.table.api.TableSchema;
 
-import com.alibaba.alink.common.VectorTypes;
+import com.alibaba.alink.common.AlinkTypes;
+import com.alibaba.alink.common.exceptions.AkIllegalDataException;
+import com.alibaba.alink.common.exceptions.AkUnsupportedOperationException;
 import com.alibaba.alink.common.linalg.DenseVector;
 import com.alibaba.alink.common.linalg.SparseVector;
 import com.alibaba.alink.common.linalg.Vector;
@@ -42,7 +44,7 @@ public class VectorAssemblerMapper extends MISOMapper {
 
 	@Override
 	protected TypeInformation<?> initOutputColType() {
-		return VectorTypes.VECTOR;
+		return AlinkTypes.VECTOR;
 	}
 
 	/**
@@ -84,12 +86,12 @@ public class VectorAssemblerMapper extends MISOMapper {
 				} else if (col instanceof Vector) {
 					pos = appendVector((Vector) col, map, pos);
 				} else {
-					throw new UnsupportedOperationException("not support type of object.");
+					throw new AkUnsupportedOperationException("only support number, string and vector, other types will cause exception");
 				}
 			} else {
 				switch (handleInvalid) {
 					case ERROR:
-						throw new NullPointerException("null value is found in vector assembler inputs.");
+						throw new AkIllegalDataException("null value is found in vector assembler inputs.");
 					case SKIP:
 						return null;
 					default:
@@ -110,7 +112,7 @@ public class VectorAssemblerMapper extends MISOMapper {
 		if (vec instanceof SparseVector) {
 			SparseVector sv = (SparseVector) vec;
 			if (sv.size() <= 0) {
-				throw new RuntimeException("The append sparse vector must have size.");
+				throw new AkIllegalDataException("The append sparse vector must have size.");
 			}
 			int[] idx = sv.getIndices();
 			double[] values = sv.getValues();
